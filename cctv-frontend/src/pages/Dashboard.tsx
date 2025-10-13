@@ -32,7 +32,7 @@ export default function Dashboard() {
       icon: Upload, 
       href: '/analysis', 
       color: 'text-white', 
-      bg: 'bg-[#7075b8] hover:bg-[#5a5f9a]',
+      bg: 'bg-[#0a1a3a] hover:bg-[#0d2147]',
       primary: true
     },
     { 

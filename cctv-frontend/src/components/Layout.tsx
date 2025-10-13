@@ -62,7 +62,7 @@ export default function Layout({ children }: LayoutProps) {
           </Button>
 
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: '#7075b8' }}>
+            <div className="p-2 rounded-lg" style={{ backgroundColor: '#0a1a3a' }}>
               <Camera className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -118,7 +118,7 @@ export default function Layout({ children }: LayoutProps) {
                           ? "text-white"
                           : "text-gray-700 hover:bg-gray-100"
                       )}
-                      style={isActive ? { backgroundColor: '#7075b8' } : {}}
+                      style={isActive ? { backgroundColor: '#0a1a3a' } : {}}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <item.icon className="h-5 w-5" />

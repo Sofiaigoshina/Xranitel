@@ -68,7 +68,7 @@ export default function VideoAnalysis() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="mb-2 text-xs sm:text-sm border-[#7075b8] text-[#7075b8] hover:bg-[#7075b8] hover:text-white"
+                className="mb-2 text-xs sm:text-sm border-[#0a1a3a] text-[#0a1a3a] hover:bg-[#0a1a3a] hover:text-white"
               >
                 <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Choose Files
@@ -99,10 +99,10 @@ export default function VideoAnalysis() {
                   variant={anomaly.enabled ? "default" : "outline"}
                   className={`h-auto p-3 sm:p-4 flex flex-col items-center gap-2 cursor-pointer ${
                     anomaly.enabled 
-                      ? 'text-white border-[#7075b8]' 
+                      ? 'text-white border-[#0a1a3a]' 
                       : 'hover:bg-gray-50 border-gray-200'
                   }`}
-                  style={anomaly.enabled ? { backgroundColor: '#7075b8' } : {}}
+                  style={anomaly.enabled ? { backgroundColor: '#0a1a3a' } : {}}
                   onClick={() => toggleAnomaly(anomaly.id)}
                 >
                   <div className={`p-2 rounded ${
