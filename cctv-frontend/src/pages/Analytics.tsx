@@ -60,6 +60,7 @@ export default function Analytics() {
         <p className="text-sm sm:text-base text-gray-600 mt-1">
           Anomaly detection patterns and security insights
         </p>
+        <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
       {/* Export Controls */}
@@ -72,10 +73,10 @@ export default function Analytics() {
       </div>
 
       {/* Anomaly Trends */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
-        <CardHeader>
+      <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
+        <CardHeader className="border-b border-[#4a5a6b]/10">
           <CardTitle className="flex items-center gap-2 text-gray-800">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5 text-[#4a5a6b]" />
             Anomaly Detection Trends
           </CardTitle>
           <CardDescription>

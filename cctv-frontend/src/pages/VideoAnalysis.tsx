@@ -46,14 +46,15 @@ export default function VideoAnalysis() {
         <p className="text-sm sm:text-base text-gray-600 mt-1">
           Upload and analyze CCTV footage with AI-powered anomaly detection
         </p>
+        <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Upload Section */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="pb-2 sm:pb-3">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
+          <CardHeader className="pb-2 sm:pb-3 border-b border-[#4a5a6b]/10">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-base sm:text-lg">
-              <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-[#4a5a6b]" />
               Upload Video
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
@@ -68,7 +69,7 @@ export default function VideoAnalysis() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="mb-2 text-xs sm:text-sm border-[#0a1a3a] text-[#0a1a3a] hover:bg-[#0a1a3a] hover:text-white"
+                className="mb-2 text-xs sm:text-sm border-[#4a5a6b] text-[#4a5a6b] hover:bg-[#4a5a6b] hover:text-white"
               >
                 <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Choose Files
@@ -81,10 +82,10 @@ export default function VideoAnalysis() {
         </Card>
 
         {/* Anomaly Selection */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="pb-2 sm:pb-3">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
+          <CardHeader className="pb-2 sm:pb-3 border-b border-[#4a5a6b]/10">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-base sm:text-lg">
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-[#4a5a6b]" />
               Select Anomalies
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
@@ -99,10 +100,10 @@ export default function VideoAnalysis() {
                   variant={anomaly.enabled ? "default" : "outline"}
                   className={`h-auto p-3 sm:p-4 flex flex-col items-center gap-2 cursor-pointer ${
                     anomaly.enabled 
-                      ? 'text-white border-[#0a1a3a]' 
+                      ? 'text-white border-[#4a5a6b]' 
                       : 'hover:bg-gray-50 border-gray-200'
                   }`}
-                  style={anomaly.enabled ? { backgroundColor: '#0a1a3a' } : {}}
+                  style={anomaly.enabled ? { backgroundColor: '#4a5a6b' } : {}}
                   onClick={() => toggleAnomaly(anomaly.id)}
                 >
                   <div className={`p-2 rounded ${
@@ -138,10 +139,10 @@ export default function VideoAnalysis() {
       </div>
 
       {/* Analysis Results */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
-        <CardHeader>
+      <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#0a1a3a]/20">
+        <CardHeader className="border-b border-[#4a5a6b]/10">
           <CardTitle className="flex items-center gap-2 text-gray-800">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5 text-[#4a5a6b]" />
             Detection Results
           </CardTitle>
           <CardDescription>

@@ -75,6 +75,7 @@ export default function LiveMonitoring() {
         <p className="text-sm sm:text-base text-gray-600 mt-1">
           Real-time CCTV feeds with AI-powered anomaly detection
         </p>
+        <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
       {/* Live Alerts */}
@@ -82,7 +83,7 @@ export default function LiveMonitoring() {
         <Card className="bg-white border border-red-200 shadow-sm">
           <CardHeader className="bg-red-50 border-b border-red-200">
             <CardTitle className="flex items-center gap-2 text-red-700 text-lg">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5 text-[#4a5a6b]" />
               Live Alerts
             </CardTitle>
             <CardDescription className="text-red-600">
@@ -124,7 +125,7 @@ export default function LiveMonitoring() {
       {/* Camera Grid */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {cameraFeeds.map((camera) => (
-          <Card key={camera.id} className="bg-white border border-gray-200 shadow-sm">
+          <Card key={camera.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
             <CardHeader className="bg-blue-50 border-b border-blue-200">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -242,10 +243,10 @@ export default function LiveMonitoring() {
       {/* System Status */}
       <Card className="bg-white border border-gray-200 shadow-sm">
         <CardHeader className="bg-green-50 border-b border-green-200">
-          <CardTitle className="flex items-center gap-2 text-green-700 text-lg">
-            <Activity className="h-5 w-5" />
-            System Status
-          </CardTitle>
+            <CardTitle className="flex items-center gap-2 text-green-700 text-lg">
+              <Activity className="h-5 w-5 text-[#0a1a3a]" />
+              System Status
+            </CardTitle>
           <CardDescription className="text-green-600">
             AI detection system performance metrics
           </CardDescription>

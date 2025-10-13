@@ -116,24 +116,25 @@ export default function Alerts() {
         <p className="text-sm sm:text-base text-gray-600 mt-1">
           AI-detected anomalies from your video analysis
         </p>
+        <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
       {/* Alert Summary */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Alerts</p>
                 <p className="text-2xl font-bold text-gray-900">{alerts.length}</p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-50">
-                <AlertTriangle className="h-5 w-5 text-blue-600" />
+              <div className="p-2 rounded-lg bg-[#4a5a6b]/10 border border-[#4a5a6b]/20">
+                <AlertTriangle className="h-5 w-5 text-[#4a5a6b]" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -142,13 +143,13 @@ export default function Alerts() {
                   {alerts.filter(alert => alert.status === 'active').length}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-red-50">
+              <div className="p-2 rounded-lg bg-red-50 border border-[#4a5a6b]/10">
                 <Activity className="h-5 w-5 text-red-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -157,13 +158,13 @@ export default function Alerts() {
                   {alerts.filter(alert => alert.severity === 'critical').length}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-red-50">
+              <div className="p-2 rounded-lg bg-red-50 border border-[#4a5a6b]/10">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -172,7 +173,7 @@ export default function Alerts() {
                   {alerts.filter(alert => alert.status === 'resolved').length}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50">
+              <div className="p-2 rounded-lg bg-green-50 border border-[#4a5a6b]/10">
                 <Shield className="h-5 w-5 text-green-600" />
               </div>
             </div>

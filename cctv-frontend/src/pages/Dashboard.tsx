@@ -32,7 +32,7 @@ export default function Dashboard() {
       icon: Upload, 
       href: '/analysis', 
       color: 'text-white', 
-      bg: 'bg-[#0a1a3a] hover:bg-[#0d2147]',
+      bg: 'bg-[#4a5a6b] hover:bg-[#3d4a58]',
       primary: true
     },
     { 
@@ -53,19 +53,20 @@ export default function Dashboard() {
         <p className="text-base sm:text-lg text-gray-600 mt-2">
           Upload your CCTV footage and let AI detect anomalies automatically
         </p>
+        <div className="mt-4 h-1 w-20 bg-[#4a5a6b] rounded-full mx-auto"></div>
       </div>
 
       {/* Stats Overview */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card key={stat.title} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/20">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
                   <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
                 </div>
-                <div className={`p-2 sm:p-3 rounded-xl ${stat.bg} flex-shrink-0`}>
+                <div className={`p-2 sm:p-3 rounded-xl ${stat.bg} flex-shrink-0 border border-[#4a5a6b]/10`}>
                   <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
                 </div>
               </div>
@@ -77,9 +78,9 @@ export default function Dashboard() {
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Recent Analyses */}
         <Card className="bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="pb-3 sm:pb-4">
+          <CardHeader className="pb-3 sm:pb-4 border-b border-[#4a5a6b]/10">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-lg">
-              <FileVideo className="h-5 w-5" />
+              <FileVideo className="h-5 w-5 text-[#4a5a6b]" />
               Recent Analyses
             </CardTitle>
             <CardDescription>
@@ -122,9 +123,9 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <Card className="bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="pb-3 sm:pb-4">
+          <CardHeader className="pb-3 sm:pb-4 border-b border-[#4a5a6b]/10">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-lg">
-              <Activity className="h-5 w-5" />
+              <Activity className="h-5 w-5 text-[#4a5a6b]" />
               Quick Actions
             </CardTitle>
             <CardDescription>
