@@ -1,0 +1,156 @@
+CCTV Project Run + GitHub Push Guide (Windows)
+==============================================
+
+Project structure (root):
+- cctv-backend/   (FastAPI + detectors)
+- cctv-frontend/  (React + Vite)
+- mongo-data/     (local MongoDB data folder)
+
+--------------------------------------------------
+1) Prerequisites
+--------------------------------------------------
+- Python 3.10+ (you are currently using Anaconda Python for backend runtime)
+- Node.js 18+
+- npm
+- MongoDB installed locally (mongod executable available)
+- Git + GitHub repository access
+
+Optional but recommended:
+- Use one Python environment consistently for backend (Anaconda OR .venv).
+
+--------------------------------------------------
+2) FIRST COMMAND: Enable virtual environment
+--------------------------------------------------
+Run this first in any terminal before backend/python commands:
+
+& c:\Users\anwaa\Desktop\cctv\.venv\Scripts\Activate.ps1
+
+If PowerShell blocks script execution, run once (as needed):
+
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+--------------------------------------------------
+3) Start MongoDB
+--------------------------------------------------
+If MongoDB service is not running, start mongod manually and keep it open:
+
+"C:\Program Files\MongoDB\Server\8.0\bin\mongod.exe" --dbpath "c:\Users\anwaa\Desktop\cctv\mongo-data" --bind_ip 127.0.0.1 --port 27017
+
+Notes:
+- If port 27017 is already in use, MongoDB may already be running.
+- If command exits immediately, check terminal output for permission/path issues.
+
+--------------------------------------------------
+4) Run Backend (FastAPI)
+--------------------------------------------------
+Open terminal #1:
+
+cd c:\Users\anwaa\Desktop\cctv\cctv-backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+Health check:
+http://127.0.0.1:8000/health
+
+Expected:
+- status: "ok"
+- mongodb: "connected"
+
+If mongodb is disabled:
+- ensure mongod is running
+- verify cctv-backend/.env has correct MONGODB_URI
+
+--------------------------------------------------
+5) Run Frontend (Vite)
+--------------------------------------------------
+Open terminal #2:
+
+cd c:\Users\anwaa\Desktop\cctv\cctv-frontend
+npm install
+npm run dev
+
+Open local app URL shown by Vite (typically):
+http://localhost:5173
+
+--------------------------------------------------
+6) Production Build Check
+--------------------------------------------------
+From frontend folder:
+
+npm run build
+
+This verifies TypeScript + Vite bundle success.
+
+--------------------------------------------------
+7) Recent feature checklist (current state)
+--------------------------------------------------
+- Dashboard:
+  - Recent Analyses shows only latest 3 videos.
+- Alerts:
+  - Active/Resolved flow
+  - Resolve/Unresolve toggle (DB-backed)
+  - Search bar at top (full-width) with suggestion dropdown
+  - View opens video analysis at exact alert timestamp
+- Analytics:
+  - Contains anomaly frequency chart only
+
+--------------------------------------------------
+8) Push recent changes to GitHub
+--------------------------------------------------
+From project root:
+
+cd c:\Users\anwaa\Desktop\cctv
+git status
+
+(Review changes)
+
+git add .
+git commit -m "Update alerts search/suggestions, toggle resolve logic, analytics frequency view, dashboard recent list"
+
+Push to your current branch:
+
+git push
+
+If this is first push for branch:
+
+git push -u origin <branch-name>
+
+--------------------------------------------------
+9) If remote is not configured yet
+--------------------------------------------------
+Check remotes:
+
+git remote -v
+
+Add remote:
+
+git remote add origin <your-github-repo-url>
+
+git push -u origin main
+
+(Replace main with your branch if needed.)
+
+--------------------------------------------------
+10) Common troubleshooting
+--------------------------------------------------
+A) sudden_fall_visual protobuf/mediapipe issue:
+- Use consistent runtime environment for backend.
+- Restart backend after dependency changes.
+
+B) Alerts/Dashboard empty:
+- Backend may be up but MongoDB disconnected.
+- Check /health endpoint.
+
+C) Frontend can’t reach backend:
+- Confirm backend running on port 8000.
+- Confirm VITE_API_BASE if set in frontend env.
+
+--------------------------------------------------
+11) Recommended daily workflow
+--------------------------------------------------
+1. Activate virtual env
+2. Start MongoDB
+3. Start backend
+4. Start frontend
+5. Develop + test pages
+6. Run npm run build before commit
+7. git add/commit/push

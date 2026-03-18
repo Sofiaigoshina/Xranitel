@@ -1,0 +1,26 @@
+# Terminal 1: BACKEND
+cd c:\Users\anwaa\Desktop\cctv\cctv-backend
+
+# If backend is Python:
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py
+# (or: python main.py)
+
+# If backend is Node.js:
+npm install
+npm run dev
+# (or: npm start)
+
+
+# Terminal 2: FRONTEND
+cd c:\Users\anwaa\Desktop\cctv\frontend
+npm install
+npm run dev
+# (or: npm start)
+
+
+
+
+uvicorn main:app --reload --host 0.0.0.0 --port 8000

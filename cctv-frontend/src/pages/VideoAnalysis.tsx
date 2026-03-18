@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -23,7 +24,30 @@ interface PopupAlert {
   createdAt: number // Date.now() when shown
 }
 
+interface VideoDetectionResponse {
+  video: {
+    id: string
+    filename: string
+    status: string
+    created_at?: string | null
+    completed_at?: string | null
+    total_detections: number
+    selected_anomalies?: string[]
+  }
+  detections: Array<{
+    id: string
+    anomaly_id: string
+    label: string
+    time: number
+    confidence: number
+    created_at?: string | null
+    video_time?: string
+  }>
+}
+
 export default function VideoAnalysis() {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const videoCardRef = useRef<HTMLDivElement | null>(null)
   const [anomalyTypes, setAnomalyTypes] = useState([
@@ -43,6 +67,7 @@ export default function VideoAnalysis() {
   // Video player state
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [pendingSeekTime, setPendingSeekTime] = useState<number | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
 
@@ -50,7 +75,90 @@ export default function VideoAnalysis() {
   const [popupAlerts, setPopupAlerts] = useState<PopupAlert[]>([])
   const shownEventKeysRef = useRef<Set<string>>(new Set())
 
-  const API_BASE = 'http://localhost:8000'
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+  const selectedVideoId = searchParams.get('videoId')
+  const selectedFilenameFromQuery = searchParams.get('file')
+  const selectedTimeParam = searchParams.get('t')
+
+  useEffect(() => {
+    if (!selectedVideoId) return
+
+    const controller = new AbortController()
+
+    const loadVideoDetections = async () => {
+      try {
+        setIsProcessing(false)
+        setResultErrors({})
+        setDetectionResults({})
+        setPopupAlerts([])
+        shownEventKeysRef.current.clear()
+
+        const res = await fetch(`${API_BASE}/videos/${encodeURIComponent(selectedVideoId)}/detections`, {
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }))
+          const detail =
+            typeof err?.detail === 'string'
+              ? err.detail
+              : err?.detail?.message || err?.message || res.statusText
+          throw new Error(detail || 'Failed to load video detections')
+        }
+
+        const json = (await res.json()) as VideoDetectionResponse
+        const grouped = json.detections.reduce<Record<string, { time: number; confidence: number; label: string }[]>>(
+          (acc, row) => {
+            const key = row.anomaly_id || 'unknown'
+            if (!acc[key]) acc[key] = []
+            acc[key].push({
+              time: Number(row.time || 0),
+              confidence: Number(row.confidence || 0),
+              label: row.label || row.anomaly_id || 'Anomaly',
+            })
+            return acc
+          },
+          {}
+        )
+
+        const sortedGrouped = Object.fromEntries(
+          Object.entries(grouped).map(([k, events]) => [
+            k,
+            [...events].sort((a, b) => a.time - b.time),
+          ])
+        )
+
+        setDetectionResults(sortedGrouped)
+
+        const total = json.detections.length
+        const startAt = Number(selectedTimeParam ?? (location.state as { selectedAlertTime?: number } | null)?.selectedAlertTime ?? 0)
+        const safeStartAt = Number.isFinite(startAt) && startAt >= 0 ? startAt : 0
+        const streamUrl = `${API_BASE}/videos/${encodeURIComponent(selectedVideoId)}/stream`
+
+        setVideoUrl(streamUrl)
+        setPendingSeekTime(safeStartAt)
+        setIsVideoPlaying(true)
+
+        const filename =
+          json.video?.filename ||
+          selectedFilenameFromQuery ||
+          (location.state as { selectedFilename?: string } | null)?.selectedFilename ||
+          'Selected video'
+
+        setProcessMessage(
+          total > 0
+            ? `Loaded ${total} stored anomaly event(s) for ${filename}${safeStartAt > 0 ? ` • starting at ${Math.floor(safeStartAt / 60)}:${String(Math.floor(safeStartAt % 60)).padStart(2, '0')}` : ''}.`
+            : `No stored anomaly events found for ${filename}.`
+        )
+      } catch (err: unknown) {
+        if ((err as Error).name === 'AbortError') return
+        const message = err instanceof Error ? err.message : 'Failed to load saved detections'
+        setProcessMessage(`Error: ${message}`)
+      }
+    }
+
+    loadVideoDetections()
+    return () => controller.abort()
+  }, [API_BASE, selectedVideoId, selectedFilenameFromQuery, selectedTimeParam, location.state])
 
   // Flatten all events for real-time reveal (only show events whose time <= video currentTime)
   const allEvents = Object.entries(detectionResults).flatMap(([anomalyId, events]) =>
@@ -81,7 +189,7 @@ export default function VideoAnalysis() {
   // Clean up object URL when component unmounts or video changes
   useEffect(() => {
     return () => {
-      if (videoUrl) URL.revokeObjectURL(videoUrl)
+      if (videoUrl?.startsWith('blob:')) URL.revokeObjectURL(videoUrl)
     }
   }, [videoUrl])
 
@@ -117,9 +225,21 @@ export default function VideoAnalysis() {
     if (videoRef.current) {
       videoCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       videoRef.current.currentTime = time
-      videoRef.current.play()
+      void videoRef.current.play()
     }
   }, [])
+
+  const onVideoLoadedMetadata = useCallback(() => {
+    if (!videoRef.current) return
+    if (pendingSeekTime === null) return
+
+    const seek = Math.max(0, Math.min(pendingSeekTime, Number.isFinite(videoRef.current.duration) ? videoRef.current.duration : pendingSeekTime))
+    videoRef.current.currentTime = seek
+    void videoRef.current.play().catch(() => {
+      // Autoplay may be blocked by browser; controls remain available for manual play.
+    })
+    setPendingSeekTime(null)
+  }, [pendingSeekTime])
 
   const enabledAnomalyCount = anomalyTypes.filter((anomaly) => anomaly.enabled).length
 
@@ -308,6 +428,7 @@ export default function VideoAnalysis() {
                 ref={videoRef}
                 src={videoUrl}
                 controls
+                onLoadedMetadata={onVideoLoadedMetadata}
                 onTimeUpdate={onTimeUpdate}
                 onEnded={() => setIsVideoPlaying(false)}
                 className="max-w-full max-h-[70vh] rounded-lg bg-black object-contain"
@@ -472,7 +593,14 @@ export default function VideoAnalysis() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => seekTo(event.time)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => seekTo(event.time)}
+                    disabled={!videoUrl}
+                    title={videoUrl ? 'Jump to timestamp' : 'Upload/open video to seek this timestamp'}
+                  >
                     <Play className="h-3 w-3 mr-1" />
                     Review
                   </Button>

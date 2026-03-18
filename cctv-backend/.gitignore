@@ -2,3 +2,5 @@ uploads/
 models/
 __pycache__/
 .venv/
+.env
+.env.*

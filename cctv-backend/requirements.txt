@@ -11,3 +11,6 @@ imageio-ffmpeg
 opencv-python
 Pillow
 mediapipe
+protobuf>=3.20.3,<4
+pymongo
+python-dotenv

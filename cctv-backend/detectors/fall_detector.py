@@ -38,6 +38,27 @@ _cached_classifier = None
 _cached_model_path: str | None = None
 
 
+def _import_mediapipe_compat():
+    """Import mediapipe with protobuf compatibility fallback.
+
+    Fixes runtime errors like:
+      'google._upb._message.FieldDescriptor' object has no attribute 'label'
+    """
+    # Prefer python implementation for better compatibility with older pb2 code.
+    os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
+    try:
+        import mediapipe as mp  # type: ignore
+        return mp
+    except Exception as exc:
+        raise RuntimeError(
+            "Sudden Fall detector failed to import mediapipe. "
+            "This is often caused by protobuf version incompatibility. "
+            "Install compatible deps (e.g., protobuf<4,>=3.20.3) and retry. "
+            f"Import error: {exc}"
+        )
+
+
 def _normalize_skeleton(landmarks: np.ndarray) -> np.ndarray:
     """Normalize pose exactly like posture_module/extract_pose_sequences.py."""
     left_hip = landmarks[23][:2]
@@ -94,14 +115,7 @@ def detect(video_path: str, model_dir: str):
     fall_idx = class_names.index("fall") if "fall" in class_names else 1
     lying_idx = class_names.index("lying") if "lying" in class_names else 2
 
-    try:
-        import mediapipe as mp
-    except Exception as exc:
-        raise RuntimeError(
-            "Sudden Fall detector requires `mediapipe`. "
-            "Install it in the Python environment used by the backend. "
-            f"Import error: {exc}"
-        )
+    mp = _import_mediapipe_compat()
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
