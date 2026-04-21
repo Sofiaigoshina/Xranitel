@@ -32,6 +32,7 @@ Make sure these are ignored before push:
 Also keep these tracked files in repo:
 - cctv-backend/.env.example
 - cctv-backend/uploads/.gitkeep
+- cctv-frontend/.env.example
 
 Reason:
 - Avoid pushing machine-specific binaries, local DB files, temp uploads, and secrets.
@@ -71,6 +72,7 @@ B) TARGET PC (ANOTHER MACHINE): COMPLETE SETUP
 Pre-requisites on target PC
 - Windows 10/11
 - Git
+- Git LFS (required for model files)
 - Python 3.12.x
 - Node.js LTS (18+ or 20+)
 - MongoDB Server (if hosting DB locally)
@@ -78,8 +80,13 @@ Pre-requisites on target PC
 
 1) Clone repository
 - Choose folder (example): c:\Users\<you>\Desktop
+- Initialize Git LFS once:
+  git lfs install
 - Clone repo:
   git clone https://github.com/anwaar-subhani/vision-guard-ai.git
+- Enter repo and pull LFS model objects:
+  cd vision-guard-ai
+  git lfs pull
 - Open cloned project root in VS Code.
 
 2) Backend setup (from project root)
@@ -99,17 +106,25 @@ Notes:
 - cd ..\cctv-frontend
 - npm install
 
-4) Environment file for backend
-Create env from template:
+4) Environment files
+
+Backend:
 - cctv-backend\.env.example -> cctv-backend\.env
 
-Recommended template:
+Frontend:
+- cctv-frontend\.env.example -> cctv-frontend\.env
+
+Backend recommended template:
 
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB_NAME=cctv
 AUTO_DELETE_UPLOADS=false
 
 If using remote Mongo host, update MONGODB_URI accordingly (see section D).
+
+Frontend recommended template:
+
+VITE_API_BASE=http://localhost:8000
 
 5) Start backend
 - cd ..\cctv-backend
@@ -176,6 +191,11 @@ D) VERIFY EVERYTHING (POST-SETUP CHECKLIST)
 4) Mongo write test
 - Process one video.
 - Check that video/detection records are created in DB.
+
+5) Model file verification (important)
+- In repo root on target PC, run:
+  git lfs ls-files
+- Ensure model entries from cctv-backend/models are listed.
 
 ====================================================================
 E) TROUBLESHOOTING (MOST IMPORTANT)
