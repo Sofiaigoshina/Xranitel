@@ -14,6 +14,7 @@ Model file expected at: models/gunshot_trained_model.pth
 
 import os
 import subprocess
+import time
 from typing import Iterable, Iterator, List, Tuple
 
 import imageio_ffmpeg
@@ -21,6 +22,7 @@ import librosa
 import numpy as np
 import torch
 import torch.nn as nn
+import torchaudio
 import torchvision.models as models
 
 
@@ -33,6 +35,7 @@ SAMPLE_RATE          = 16000       # audio sample rate (Hz)
 FRAME_DURATION       = 2.0         # length of each audio frame (seconds)
 STRIDE               = 0.1       # step between frames (seconds) — lower = finer but slower
 BATCH_SIZE           = 32          # number of frames per inference batch
+CUDA_BATCH_SIZE      = 64          # larger batch for faster GPU throughput
 CONFIDENCE_THRESHOLD = 0.5         # minimum probability to count as a gunshot
 N_MELS               = 128         # mel-spectrogram frequency bins
 HOP_LENGTH           = 512         # STFT hop length
@@ -82,6 +85,12 @@ class ResNet101Classifier(nn.Module):
 def _auto_device() -> torch.device:
     """Pick the best available device."""
     if torch.cuda.is_available():
+        # Enable fast kernels for fixed-size CNN inference.
+        torch.backends.cudnn.benchmark = True
+        if hasattr(torch.backends.cuda.matmul, "allow_tf32"):
+            torch.backends.cuda.matmul.allow_tf32 = True
+        if hasattr(torch.backends.cudnn, "allow_tf32"):
+            torch.backends.cudnn.allow_tf32 = True
         return torch.device("cuda")
     try:
         if torch.backends.mps.is_available():
@@ -110,6 +119,10 @@ def _load_model(model_path: str, device: torch.device) -> nn.Module:
     model = model.to(device)
     model.eval()
     return model
+
+
+def _is_cuda_device(device: torch.device) -> bool:
+    return str(device).startswith("cuda")
 
 
 def _extract_audio_ffmpeg(video_path: str, sample_rate: int = 16000) -> str:
@@ -166,6 +179,95 @@ def _extract_frames(
     return frames
 
 
+def _iter_windows_from_video_ffmpeg(
+    video_path: str,
+    sr: int,
+    frame_dur: float,
+    step_dur: float,
+) -> Iterator[Tuple[float, float, np.ndarray]]:
+    """Stream audio via ffmpeg and yield sliding windows incrementally."""
+    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    window_len = max(1, int(frame_dur * sr))
+    hop_len = max(1, int(step_dur * sr))
+    bytes_per_sample = 2  # s16le
+
+    ffmpeg_command = [
+        ffmpeg_path,
+        "-i",
+        video_path,
+        "-vn",
+        "-ac",
+        "1",
+        "-ar",
+        str(sr),
+        "-sample_fmt",
+        "s16",
+        "-f",
+        "s16le",
+        "pipe:1",
+    ]
+
+    proc = subprocess.Popen(
+        ffmpeg_command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        bufsize=10**6,
+    )
+
+    if proc.stdout is None:
+        proc.kill()
+        raise RuntimeError("Failed to open ffmpeg stdout pipe for gunshot detector")
+
+    buffer = np.empty(0, dtype=np.float32)
+    start_sample = 0
+    completed_normally = False
+
+    try:
+        while True:
+            raw = proc.stdout.read(hop_len * bytes_per_sample)
+            if not raw:
+                completed_normally = True
+                break
+
+            chunk = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+            if chunk.size == 0:
+                continue
+
+            buffer = np.concatenate((buffer, chunk))
+
+            while buffer.size >= window_len:
+                window = buffer[:window_len]
+                end_sample = start_sample + window_len
+                yield start_sample / sr, end_sample / sr, window
+                start_sample += hop_len
+                buffer = buffer[hop_len:]
+
+        if buffer.size > int(0.5 * sr):
+            yield start_sample / sr, (start_sample + buffer.size) / sr, buffer
+    finally:
+        try:
+            proc.stdout.close()
+        except Exception:
+            pass
+
+        if completed_normally:
+            return_code = proc.wait()
+            if return_code != 0:
+                raise RuntimeError(f"ffmpeg audio streaming failed with exit code {return_code}")
+        else:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+            try:
+                proc.wait(timeout=1.0)
+            except Exception:
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+
+
 def _iter_batches(items: list, batch_size: int) -> Iterable[list]:
     """Yield fixed-size batches from a list."""
     for start in range(0, len(items), batch_size):
@@ -192,12 +294,55 @@ def _ensure_model_path(model_dir: str) -> str:
     return model_path
 
 
+def _get_mel_transforms(device: torch.device):
+    key = str(device)
+    cached = _cached_mel_transforms.get(key)
+    if cached is not None:
+        return cached
+
+    mel_transform = torchaudio.transforms.MelSpectrogram(
+        sample_rate=SAMPLE_RATE,
+        n_fft=N_FFT,
+        hop_length=HOP_LENGTH,
+        n_mels=N_MELS,
+        power=2.0,
+    ).to(device)
+    db_transform = torchaudio.transforms.AmplitudeToDB(stype="power", top_db=80.0).to(device)
+
+    _cached_mel_transforms[key] = (mel_transform, db_transform)
+    return mel_transform, db_transform
+
+
+def _preprocess_batch_torch(batch_chunks: list[np.ndarray], device: torch.device) -> torch.Tensor:
+    """Vectorized mel-spectrogram preprocessing for one batch."""
+    use_cuda = _is_cuda_device(device)
+    wave = torch.from_numpy(np.stack(batch_chunks, axis=0)).float().to(device, non_blocking=use_cuda)
+    mel_transform, db_transform = _get_mel_transforms(device)
+
+    mel = mel_transform(wave)
+    mel_db = db_transform(mel)
+
+    min_v = mel_db.amin(dim=(1, 2), keepdim=True)
+    max_v = mel_db.amax(dim=(1, 2), keepdim=True)
+    mel_norm = (mel_db - min_v) / (max_v - min_v + 1e-8)
+
+    mel_3ch = mel_norm.unsqueeze(1).repeat(1, 3, 1, 1)
+    mel_3ch = nn.functional.interpolate(
+        mel_3ch,
+        size=(IMAGE_SIZE, IMAGE_SIZE),
+        mode="bilinear",
+        align_corners=False,
+    )
+    return mel_3ch
+
+
 def stream_inference(
     video_path: str,
     model_dir: str,
     *,
     step_dur: float | None = None,
     batch_size: int | None = None,
+    realtime_mode: bool = False,
 ) -> Iterator[dict]:
     """Yield per-audio-window inference results in timeline order.
 
@@ -214,36 +359,82 @@ def stream_inference(
     model_path = _ensure_model_path(model_dir)
     effective_step = float(step_dur) if step_dur is not None else STRIDE
     effective_step = max(0.05, effective_step)
-    effective_batch_size = int(batch_size) if batch_size is not None else BATCH_SIZE
+
+    model, device = _get_model(model_path)
+    use_cuda = _is_cuda_device(device)
+    default_batch_size = CUDA_BATCH_SIZE if use_cuda else BATCH_SIZE
+    effective_batch_size = int(batch_size) if batch_size is not None else default_batch_size
     effective_batch_size = max(1, effective_batch_size)
 
-    wav_path = _extract_audio_ffmpeg(video_path, SAMPLE_RATE)
-    try:
-        audio, sr = librosa.load(wav_path, sr=SAMPLE_RATE, mono=True)
-        frames = _extract_frames(audio, sr, step_dur=effective_step)
-        model, device = _get_model(model_path)
-
-        for batch_frames in _iter_batches(frames, effective_batch_size):
-            tensors = [_preprocess_frame(chunk, sr) for (_, _, chunk) in batch_frames]
-            batch_tensor = torch.stack(tensors, dim=0).to(device)
-
-            with torch.no_grad():
-                logits = model(batch_tensor)
-                probs = torch.softmax(logits, dim=1)
-                gunshot_probs = probs[:, 1].cpu().numpy()
-
-            for i, (start_t, end_t, _) in enumerate(batch_frames):
-                prob = float(gunshot_probs[i])
-                event = _gunshot_event(start_t, end_t, prob)
-                is_detection = prob > CONFIDENCE_THRESHOLD
-                event["is_detection"] = is_detection
-                event["prediction_label"] = "Gunshot" if is_detection else "No Gunshot"
-                yield event
-    finally:
+    def run_batch(batch_frames: list[tuple[float, float, np.ndarray]]):
+        chunks = [chunk for (_, _, chunk) in batch_frames]
         try:
-            os.remove(wav_path)
-        except OSError:
-            pass
+            batch_tensor = _preprocess_batch_torch(chunks, device)
+        except Exception:
+            # Fallback keeps detector functional if torchaudio backend is unavailable.
+            tensors = [_preprocess_frame(chunk, SAMPLE_RATE) for chunk in chunks]
+            batch_tensor = torch.stack(tensors, dim=0).to(device, non_blocking=use_cuda)
+
+        with torch.inference_mode():
+            if use_cuda:
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    logits = model(batch_tensor)
+            else:
+                logits = model(batch_tensor)
+            probs = torch.softmax(logits.float(), dim=1)
+            gunshot_probs = probs[:, 1].cpu().numpy()
+
+        for i, (start_t, end_t, _) in enumerate(batch_frames):
+            prob = float(gunshot_probs[i])
+            emit_time = end_t if realtime_mode else start_t
+            event = _gunshot_event(emit_time, end_t, prob)
+            is_detection = prob > CONFIDENCE_THRESHOLD
+            event["is_detection"] = is_detection
+            event["prediction_label"] = "Gunshot" if is_detection else "No Gunshot"
+
+            if realtime_mode:
+                target = wall_start + float(end_t)
+                delay = target - time.monotonic()
+                if delay > 0:
+                    time.sleep(delay)
+
+            yield event
+
+    wall_start = time.monotonic() if realtime_mode else None
+
+    if realtime_mode:
+        pending: list[tuple[float, float, np.ndarray]] = []
+        for start_t, end_t, window in _iter_windows_from_video_ffmpeg(
+            video_path,
+            SAMPLE_RATE,
+            FRAME_DURATION,
+            effective_step,
+        ):
+            pending.append((start_t, end_t, window))
+            if len(pending) < effective_batch_size:
+                continue
+
+            for event in run_batch(pending):
+                yield event
+            pending = []
+
+        if pending:
+            for event in run_batch(pending):
+                yield event
+    else:
+        wav_path = _extract_audio_ffmpeg(video_path, SAMPLE_RATE)
+        try:
+            audio, sr = librosa.load(wav_path, sr=SAMPLE_RATE, mono=True)
+            frames = _extract_frames(audio, sr, step_dur=effective_step)
+
+            for batch_frames in _iter_batches(frames, effective_batch_size):
+                for event in run_batch(batch_frames):
+                    yield event
+        finally:
+            try:
+                os.remove(wav_path)
+            except OSError:
+                pass
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +443,7 @@ def stream_inference(
 _cached_model: nn.Module | None = None
 _cached_model_path: str | None = None
 _device: torch.device | None = None
+_cached_mel_transforms: dict[str, tuple[torchaudio.transforms.MelSpectrogram, torchaudio.transforms.AmplitudeToDB]] = {}
 
 
 def _get_model(model_path: str) -> Tuple[nn.Module, torch.device]:
@@ -278,7 +470,7 @@ def detect(video_path: str, model_dir: str):
     Yields:
         dict: {"time": <s>, "confidence": <0-100>, "label": "Gunshot"}
     """
-    for event in stream_inference(video_path, model_dir):
+    for event in stream_inference(video_path, model_dir, realtime_mode=True):
         if event.get("is_detection"):
             yield {
                 "time": event["time"],

@@ -1,22 +1,81 @@
-# Terminal 1: BACKEND
-cd c:\Users\anwaa\Desktop\cctv\cctv-backend
+# COMPLETE RUN GUIDE (THIS PC)
 
-# One-time (if .venv does not exist):
+# Project root on this machine:
+# c:\Users\FAST\Desktop\vision-guard-ai
+
+# -----------------------------------------------------
+# Terminal 1: MongoDB (keep running)
+# -----------------------------------------------------
+# Preferred (this PC): MongoDB Windows service
+Start-Service MongoDB
+
+# Check service status
+Get-Service MongoDB
+
+# Optional manual start (only if you want custom dbpath/port):
+# 1) Stop service first, otherwise port 27017 may already be in use
+# Stop-Service MongoDB
+# 2) First time only: create local db folder
+# New-Item -ItemType Directory -Force c:\Users\FAST\Desktop\vision-guard-ai\mongo-data
+
+& "C:\Program Files\MongoDB\Server\8.2\bin\mongod.exe" --dbpath "c:\Users\FAST\Desktop\vision-guard-ai\mongo-data" --bind_ip 127.0.0.1 --port 27017
+
+
+# -----------------------------------------------------
+# Terminal 2: BACKEND (FastAPI)
+# -----------------------------------------------------
+cd c:\Users\FAST\Desktop\vision-guard-ai\cctv-backend
+
+# One-time only (if .venv does not exist)
 py -m venv .venv
 
-# Every run:
+# Every run
+# If Activate.ps1 is blocked by execution policy, use one of these:
+# Option A (temporary for this terminal only):
+# Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+# .\.venv\Scripts\Activate.ps1
+#
+# Option B (recommended, no activation needed):
+# .\.venv\Scripts\python -m pip install -r requirements.txt
+# .\.venv\Scripts\python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
+# Optional GPU acceleration (recommended for faster gunshot processing)
+# Check GPU is visible to torch:
+# .\.venv\Scripts\python -c "import torch; print(torch.__version__, torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
+# If CUDA is not enabled, install CUDA build of torch:
+# .\.venv\Scripts\python -m pip install --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
-# Terminal 2: FRONTEND
-cd c:\Users\anwaa\Desktop\cctv\cctv-frontend
+
+# -----------------------------------------------------
+# Terminal 3: FRONTEND (Vite)
+# -----------------------------------------------------
+cd c:\Users\FAST\Desktop\vision-guard-ai\cctv-frontend
+
+# One-time install (or after package updates)
 npm install
+
+# Every run
 npm run dev
 
 
-# MongoDB (separate terminal, keep it open):
-& "C:\Program Files\MongoDB\Server\8.0\bin\mongod.exe" --dbpath "c:\Users\anwaa\Desktop\cctv\mongo-data" --bind_ip 127.0.0.1 --port 27017
+# -----------------------------------------------------
+# URLs
+# -----------------------------------------------------
+# Backend health: http://127.0.0.1:8000/health
+# Frontend: use the URL shown by Vite (commonly http://localhost:3001)
 
-# Use only one Mongo data folder for this project: c:\Users\anwaa\Desktop\cctv\mongo-data
+
+# -----------------------------------------------------
+# Required env files (already created once)
+# -----------------------------------------------------
+# cctv-backend\.env
+# MONGODB_URI=mongodb://127.0.0.1:27017
+# MONGODB_DB_NAME=cctv
+# AUTO_DELETE_UPLOADS=false
+
+# cctv-frontend\.env
+# VITE_API_BASE=http://localhost:8000

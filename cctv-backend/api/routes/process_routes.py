@@ -18,6 +18,7 @@ from detectors.fire_detector import stream_inference as stream_fire_inference
 from detectors.fight_detector import stream_inference as stream_fight_inference
 from detectors.gunshot_detector import stream_inference as stream_gunshot_inference
 from detectors.scream_detector import stream_inference as stream_scream_inference
+from detectors.crowd_detector import stream_inference as stream_crowd_inference
 
 router = APIRouter(tags=["processing"])
 
@@ -31,7 +32,7 @@ REALTIME_MODE_CONFIG: dict[str, dict[str, Any]] = {
         "default_prediction": "No Gunshot",
         "threshold_pct": 50.0,
         "stream_fn": stream_gunshot_inference,
-        "stream_kwargs": {"step_dur": 0.5, "batch_size": 4},
+        "stream_kwargs": {"step_dur": 0.75, "batch_size": 32},
     },
     "fire": {
         "anomaly_id": "explosion_fire_visual",
@@ -71,6 +72,14 @@ REALTIME_MODE_CONFIG: dict[str, dict[str, Any]] = {
             "yamnet_threshold": 0.025,
             "realtime_mode": True,
         },
+    },
+    "crowd": {
+        "anomaly_id": "crowd_gathering_visual",
+        "event_label": "Crowd Gathering",
+        "default_prediction": "No Crowd",
+        "threshold_pct": 65.0,
+        "stream_fn": stream_crowd_inference,
+        "stream_kwargs": {"target_infer_fps": 6.0, "conf_threshold": 0.35},
     },
 }
 

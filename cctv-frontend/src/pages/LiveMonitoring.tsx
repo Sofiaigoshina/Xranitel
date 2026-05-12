@@ -52,7 +52,7 @@ const REALTIME_MODE_META: Record<
     defaultEvent: 'Fight',
   },
   crowd: {
-    label: 'Crowd (Coming Soon)',
+    label: 'Crowd',
     endpoint: '/process-video-realtime',
     defaultPrediction: 'No Crowd',
     defaultEvent: 'Crowd Gathering',
@@ -177,11 +177,6 @@ export default function LiveMonitoring() {
     const modeMeta = REALTIME_MODE_META[realtimeMode]
     const modeLabel = modeMeta.label
     const endpoint = modeMeta.endpoint
-
-    if (realtimeMode === 'crowd') {
-      setMonitorMessage(`${modeMeta.label} realtime mode will be enabled when backend model stream is added.`)
-      return
-    }
 
     setIsRunningRealtime(true)
     setRealtimeEvents([])
@@ -349,7 +344,7 @@ export default function LiveMonitoring() {
               onClick={() => setRealtimeMode('crowd')}
               disabled={isRunningRealtime}
             >
-              Crowd (Soon)
+              Crowd
             </Button>
             <Button
               variant={realtimeMode === 'scream' ? 'default' : 'outline'}

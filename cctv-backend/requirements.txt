@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 aiofiles
-numpy
+numpy<2
 torch
 torchvision
 torchaudio
@@ -15,5 +15,6 @@ mediapipe==0.10.14
 protobuf==4.25.8
 pymongo
 python-dotenv
-tensorflow-cpu>=2.16,<2.18
-tensorflow-hub>=0.16.1
+tensorflow-cpu==2.17.1
+tensorflow-hub==0.16.1
+tf-keras==2.17.0

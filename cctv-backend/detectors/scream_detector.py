@@ -35,6 +35,7 @@ _cached_classifier = None
 _cached_yamnet = None
 _cached_tf = None
 _cached_model_path: str | None = None
+_cached_device_type: str | None = None
 
 
 def _import_tf_stack():
@@ -44,6 +45,24 @@ def _import_tf_stack():
     except Exception as exc:
         raise RuntimeError(f"TensorFlow stack unavailable: {exc}")
     return tf, hub
+
+
+def _configure_tf_device(tf_module) -> str:
+    """Enable GPU memory growth when CUDA is available."""
+    try:
+        gpus = tf_module.config.list_physical_devices("GPU")
+        if not gpus:
+            return "cpu"
+
+        for gpu in gpus:
+            try:
+                tf_module.config.experimental.set_memory_growth(gpu, True)
+            except Exception:
+                pass
+
+        return "gpu"
+    except Exception:
+        return "cpu"
 
 
 def _load_yamnet_model(hub_module):
@@ -71,7 +90,7 @@ def _load_yamnet_model(hub_module):
 
 
 def _load_models(model_path: str):
-    global _cached_classifier, _cached_yamnet, _cached_tf, _cached_model_path
+    global _cached_classifier, _cached_yamnet, _cached_tf, _cached_model_path, _cached_device_type
     if (
         _cached_classifier is not None
         and _cached_yamnet is not None
@@ -81,6 +100,7 @@ def _load_models(model_path: str):
         return _cached_tf, _cached_yamnet, _cached_classifier
 
     tf, hub = _import_tf_stack()
+    _cached_device_type = _configure_tf_device(tf)
     yamnet_model = _load_yamnet_model(hub)
     classifier = tf.keras.models.load_model(model_path)
 
@@ -311,8 +331,9 @@ def stream_inference(
             is_scream = prob >= effective_scream_threshold
 
         confidence_pct = round(prob * 100.0, 1)
+        emit_time = float(end_sec) if realtime_mode else float(start_sec)
         yield {
-            "time": round(float(start_sec), 2),
+            "time": round(emit_time, 2),
             "end_time": round(float(end_sec), 2),
             "confidence": confidence_pct,
             "label": "Scream" if is_scream else "No Scream",
@@ -325,7 +346,7 @@ def detect(video_path: str, model_dir: str):
     """Yield scream events only (for standard detector pipeline)."""
     last_emit_time = -1e9
 
-    for frame_result in stream_inference(video_path, model_dir):
+    for frame_result in stream_inference(video_path, model_dir, realtime_mode=True):
         if not frame_result.get("is_detection"):
             continue
 
