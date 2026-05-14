@@ -26,8 +26,8 @@ WINDOW_DURATION = 1.0
 WINDOW_HOP = 0.1
 
 SCREAM_THRESHOLD = 0.75
-YAMNET_SCREAM_THRESHOLD = 0.025
-YAMNET_SCREAM_CLASS_IDS = [309, 310, 311]  # scream / shout / yell
+YAMNET_SCREAM_THRESHOLD = 0.005
+YAMNET_SCREAM_CLASS_IDS = [14, 15, 16]  # 14: Yell, 15: Shout, 16: Scream
 EVENT_COOLDOWN_SEC = 0.75
 
 
@@ -129,7 +129,8 @@ def preload_models(model_dir: str) -> tuple[bool, str]:
 
 def _extract_embedding_and_yamnet_score(tf_module, yamnet_model, waveform: np.ndarray):
     scores, embeddings, _ = yamnet_model(waveform)
-    mean_embedding = tf_module.reduce_mean(embeddings, axis=0).numpy()
+    # Max-pool to capture short, high-energy scream bursts within the window.
+    mean_embedding = tf_module.reduce_max(embeddings, axis=0).numpy()
 
     scores_np = scores.numpy()
     scream_scores = scores_np[:, YAMNET_SCREAM_CLASS_IDS]
@@ -205,6 +206,11 @@ def _iter_windows_from_video_ffmpeg(
             chunk = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
             if chunk.size == 0:
                 continue
+
+            # Auto-gain for faint signals to preserve acoustic shape.
+            chunk_peak = float(np.max(np.abs(chunk)))
+            if chunk_peak > 0.005:
+                chunk = chunk / chunk_peak
 
             buffer = np.concatenate((buffer, chunk))
 

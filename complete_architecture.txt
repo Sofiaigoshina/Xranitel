@@ -1,0 +1,101 @@
+VISION GUARD AI - REAL-TIME BACKEND ARCHITECTURE
+Date: 2026-05-14
+
+PURPOSE
+Show how a video stream is processed in real time and how multiple anomaly models run in parallel in the backend.
+
+
+1) FRONTEND TO BACKEND VIDEO FLOW
+
+User opens Live Monitoring page
+                            |
+                            v
+Frontend requests processing (API call)
+                            |
+                            v
+Backend opens RTSP/video source and starts a stream processor
+
+
+2) BACKEND REAL-TIME PIPELINE (PER STREAM)
+
+                                                                                                         +---------------------------+
+                                                                                                         |   Stream Processor        |
+                                                                                                         | - capture frames          |
+                                                                                                         | - sampling/queue          |
+                                                                                                         | - preprocess (resize,     |
+                                                                                                         |   normalize)              |
+                                                                                                         +-------------+-------------+
+                                                                                                                                                          |
+                                                                                                                                                          v
+                                                                                                          +--------------------------+
+                                                                                                          |   Detector Fan-out       |
+                                                                                                          |  (parallel inference)    |
+                                                                                                          +---+----+----+----+----+---+
+                                                                                                                        |    |    |    |    |   
+                                                                                                                        v    v    v    v    v
+                                                                                                                 Fight Fall Fire Crowd Scream Gunshot
+                                                                                                                        |    |    |    |    |    
+                                                                                                                        +----+----+----+----+----+
+                                                                                                                                                          |
+                                                                                                                                                          v
+                                                                                                          +--------------------------+
+                                                                                                          |  Fusion + Rules Engine   |
+                                                                                                          | - thresholds             |
+                                                                                                          | - de-duplication         |
+                                                                                                          | - severity               |
+                                                                                                          +-------------+------------+
+                                                                                                                                                           |
+                                                                                                                                                           v
+                                                                                                          +--------------------------+
+                                                                                                          |  Alert/Event Emit        |
+                                                                                                          | - persist to MongoDB     |
+                                                                                                          | - update stats           |
+                                                                                                          +-------------+------------+
+                                                                                                                                                           |
+                                                                                                                                                           v
+                                                                                                          +--------------------------+
+                                                                                                          |  API Responses to UI     |
+                                                                                                          | - alerts/analytics/stats |
+                                                                                                          +--------------------------+
+
+
+3) HOW PARALLEL MODELS RUN
+- Each detector has its own model and inference function.
+- The stream processor dispatches the same frame to all detectors.
+- Detectors run concurrently per frame or per small batch of frames.
+- Results return independently and are merged by the fusion layer.
+
+
+4) BACKEND COMPONENT MAP
+
++------------------+     +-------------------------+     +----------------------+
+| API (FastAPI)    |     | Stream Processor        |     | Detectors (Parallel) |
+| - /process       | --->| - frame capture         | --->| - fight_detector     |
+| - /alerts        |     | - preprocess            |     | - fall_detector      |
+| - /analytics     |     | - dispatch              |     | - fire_detector      |
+| - /videos        |     |                         |     | - crowd_detector     |
+| - /stats         |     |                         |     | - scream_detector    |
+| - /health        |     |                         |     | - gunshot_detector   |
++------------------+     +-------------------------+     +----------------------+
+                                    |                         |                               |
+                                    v                         +---------------+---------------+
+       +------------------+                               |
+       | App State        |                               v
+       | - live counters  |                     +------------------+
+       | - last events    |                     | Alert Fusion     |
+       | - system flags   |                     | - thresholding   |
+       +------------------+                     | - de-duplication |
+                                    |                               | - severity       |
+                                    v                               +------------------+
+       +------------------+                               |
+       | MongoDB Storage  |<------------------------------+
+       | - alerts         |
+       | - analytics      |
+       +------------------+
+
+
+5) FAST SUMMARY
+Frontend triggers processing, backend captures frames, fans out to multiple models in parallel, fuses results, persists alerts, and serves live stats back to the UI.
+
+
+END OF DOCUMENT
