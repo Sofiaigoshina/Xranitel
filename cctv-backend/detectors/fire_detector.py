@@ -135,8 +135,8 @@ def stream_inference(
                     "time": round(t_sec, 2),
                     "end_time": round(end_t, 2),
                     "confidence": 0.0,
-                    "label": "No Fire",
-                    "prediction_label": "No Fire",
+                    "label": "Нет пожара",
+                    "prediction_label": "Нет пожара",
                     "is_detection": False,
                     "bbox": None,
                 }
@@ -155,8 +155,8 @@ def stream_inference(
                 "time": round(t_sec, 2),
                 "end_time": round(end_t, 2),
                 "confidence": round(best_conf * 100.0, 1),
-                "label": "Explosion/Fire" if is_detection else "No Fire",
-                "prediction_label": "Explosion/Fire" if is_detection else "No Fire",
+                "label": "Пожар" if is_detection else "Нет пожара",
+                "prediction_label": "Пожар" if is_detection else "Нет пожара",
                 "is_detection": is_detection,
                 "bbox": bbox,
             }
@@ -185,6 +185,6 @@ def detect(video_path: str, model_dir: str):
             "time": frame_result.get("time", 0.0),
             "end_time": frame_result.get("end_time"),
             "confidence": frame_result.get("confidence", 0.0),
-            "label": "Explosion/Fire",
+            "label": "Пожар",
             "bbox": frame_result.get("bbox"),
         }

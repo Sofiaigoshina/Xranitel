@@ -28,93 +28,93 @@ const REALTIME_MODE_META: Record<
   { label: string; endpoint: string; defaultPrediction: string; defaultEvent: string }
 > = {
   gunshot: {
-    label: 'Gunshot',
+    label: 'Выстрел',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'No Gunshot',
-    defaultEvent: 'Gunshot',
+    defaultPrediction: 'Нет выстрела',
+    defaultEvent: 'Выстрел',
   },
   fire: {
-    label: 'Fire/Explosion',
+    label: 'Пожар (взрыв)',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'No Fire',
-    defaultEvent: 'Explosion/Fire',
+    defaultPrediction: 'Нет пожара',
+    defaultEvent: 'Пожар (взрыв)',
   },
   fall: {
-    label: 'Sudden Fall',
+    label: 'Падение',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'Normal Posture',
-    defaultEvent: 'Sudden Fall',
+    defaultPrediction: 'Нормальное положение',
+    defaultEvent: 'Падение',
   },
   fight: {
-    label: 'Fight',
+    label: 'Драка',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'No Fight',
-    defaultEvent: 'Fight',
+    defaultPrediction: 'Нет драки',
+    defaultEvent: 'Драка',
   },
   crowd: {
-    label: 'Crowd',
+    label: 'Скопление людей',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'No Crowd',
-    defaultEvent: 'Crowd Gathering',
+    defaultPrediction: 'Нет скопления',
+    defaultEvent: 'Скопление людей',
   },
   scream: {
-    label: 'Scream',
+    label: 'Крик',
     endpoint: '/process-video-realtime',
-    defaultPrediction: 'No Scream',
-    defaultEvent: 'Scream',
+    defaultPrediction: 'Нет крика',
+    defaultEvent: 'Крик',
   },
 }
 
 const cameraFeeds = [
   {
     id: 1,
-    name: 'Main Entrance',
-    location: 'Building A - Floor 1',
+    name: 'Главный вход',
+    location: 'Здание А - 1 этаж',
     status: 'online',
     resolution: '1920x1080',
     fps: 30,
     audio: true,
-    lastMotion: '2 minutes ago',
+    lastMotion: '2 минуты назад',
     anomalies: 0,
   },
   {
     id: 2,
-    name: 'Parking Lot',
-    location: 'Building B - Ground Floor',
+    name: 'Холл восточный',
+    location: 'Здание А - 1 этаж',
     status: 'online',
     resolution: '1920x1080',
     fps: 30,
     audio: true,
-    lastMotion: '5 minutes ago',
+    lastMotion: '5 минут назад',
     anomalies: 1,
   },
   {
     id: 3,
-    name: 'Lobby',
-    location: 'Building A - Ground Floor',
+    name: 'Столовая',
+    location: 'Здание Б - 1 этаж',
     status: 'offline',
     resolution: '1280x720',
     fps: 25,
     audio: false,
-    lastMotion: 'Never',
+    lastMotion: 'Никогда',
     anomalies: 0,
   },
   {
     id: 4,
-    name: 'Emergency Exit',
-    location: 'Building C - Floor 2',
+    name: 'Запасной выход',
+    location: 'Здание В - 2 этаж',
     status: 'online',
     resolution: '1920x1080',
     fps: 30,
     audio: true,
-    lastMotion: '1 minute ago',
+    lastMotion: '1 минуту назад',
     anomalies: 0,
   },
 ]
 
 const liveAlerts = [
-  { id: 1, camera: 'Parking Lot', type: 'Suspicious Activity', time: '2 minutes ago', severity: 'high' },
-  { id: 2, camera: 'Main Entrance', type: 'Crowd Gathering', time: '5 minutes ago', severity: 'medium' },
+  { id: 1, camera: 'Парковка', type: 'Подозрительная активность', time: '2 минуты назад', severity: 'high' },
+  { id: 2, camera: 'Главный вход', type: 'Скопление людей', time: '5 минут назад', severity: 'medium' },
 ]
 
 export default function LiveMonitoring() {
@@ -125,7 +125,7 @@ export default function LiveMonitoring() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [isRunningRealtime, setIsRunningRealtime] = useState(false)
   const [realtimeMode, setRealtimeMode] = useState<RealtimeMode>('gunshot')
-  const [monitorMessage, setMonitorMessage] = useState('Upload a video and start realtime monitoring.')
+  const [monitorMessage, setMonitorMessage] = useState('Загрузите видео и начните мониторинг в реальном времени.')
   const [latestTickTime, setLatestTickTime] = useState<number | null>(null)
   const [latestTickConfidence, setLatestTickConfidence] = useState<number | null>(null)
   const [realtimeEvents, setRealtimeEvents] = useState<Array<{ id: string; time: number; confidence: number; label: string }>>([])
@@ -155,7 +155,7 @@ export default function LiveMonitoring() {
     setLatestTickConfidence(null)
 
     if (!selectedFile) {
-      setMonitorMessage('Upload a video and start realtime monitoring.')
+      setMonitorMessage('Загрузите видео и начните мониторинг в реальном времени.')
       return
     }
 
@@ -165,12 +165,12 @@ export default function LiveMonitoring() {
 
     const localUrl = URL.createObjectURL(selectedFile)
     setVideoUrl(localUrl)
-    setMonitorMessage(`Ready: ${selectedFile.name}`)
+    setMonitorMessage(`Готово: ${selectedFile.name}`)
   }
 
   const handleStartRealtimeDetection = async () => {
     if (!uploadedVideo) {
-      setMonitorMessage('Please upload a video first.')
+      setMonitorMessage('Пожалуйста, сначала загрузите видео.')
       return
     }
 
@@ -183,7 +183,7 @@ export default function LiveMonitoring() {
     setRealtimePredictions([])
     setLatestTickTime(0)
     setLatestTickConfidence(0)
-    setMonitorMessage(`Realtime ${modeLabel} monitoring started. Playing video and streaming live predictions...`)
+    setMonitorMessage(`Мониторинг ${modeLabel} запущен. Воспроизведение видео и потоковая передача предсказаний в реальном времени...`)
 
     if (videoRef.current) {
       videoRef.current.pause()
@@ -196,7 +196,7 @@ export default function LiveMonitoring() {
 
     setTimeout(() => {
       videoRef.current?.play().catch(() => {
-        setMonitorMessage('Video is loaded. Press play on video controls if browser blocked autoplay.')
+        setMonitorMessage('Видео загружено. Нажмите воспроизведение, если браузер заблокировал автовоспроизведение.')
       })
     }, 80)
 
@@ -212,12 +212,12 @@ export default function LiveMonitoring() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }))
-        throw new Error(err.detail ?? 'Realtime processing failed')
+        throw new Error(err.detail ?? 'Ошибка обработки в реальном времени')
       }
 
       const reader = res.body?.getReader()
       if (!reader) {
-        throw new Error('No SSE response body received from backend.')
+        throw new Error('Не получен ответ SSE от сервера.')
       }
 
       const decoder = new TextDecoder()
@@ -263,9 +263,9 @@ export default function LiveMonitoring() {
                 }
                 setRealtimeEvents((prev) => [event, ...prev].slice(0, 12))
               } else if (msg.type === 'error') {
-                setMonitorMessage(`Error: ${String(msg.message || 'Unknown realtime error')}`)
+                setMonitorMessage(`Ошибка: ${String(msg.message || 'Неизвестная ошибка реального времени')}`)
               } else if (msg.type === 'done') {
-                setMonitorMessage(`Realtime ${modeLabel} monitoring finished.`)
+                setMonitorMessage(`Мониторинг ${modeLabel} завершён.`)
               }
             } catch {
               // ignore malformed line
@@ -274,8 +274,8 @@ export default function LiveMonitoring() {
         }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown realtime error'
-      setMonitorMessage(`Error: ${message}`)
+      const message = err instanceof Error ? err.message : 'Неизвестная ошибка реального времени'
+      setMonitorMessage(`Ошибка: ${message}`)
     } finally {
       setIsRunningRealtime(false)
     }
@@ -284,9 +284,9 @@ export default function LiveMonitoring() {
   return (
     <div className="space-y-6">
       <div className="px-4 sm:px-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Live Monitoring</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Мониторинг в реальном времени</h2>
         <p className="text-sm sm:text-base text-gray-600 mt-1">
-          Real-time CCTV feeds with AI-powered anomaly detection
+          Каналы в реальном времени с обнаружением угроз
         </p>
         <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
@@ -295,10 +295,10 @@ export default function LiveMonitoring() {
         <CardHeader className="bg-blue-50 border-b border-blue-200">
           <CardTitle className="flex items-center gap-2 text-blue-700 text-lg">
             <ShieldAlert className="h-5 w-5 text-[#4a5a6b]" />
-            Realtime CCTV Monitoring (All Models)
+            Мониторинг в реальном времени (Все модели)
           </CardTitle>
           <CardDescription className="text-blue-600">
-            Upload a video, choose mode, and watch playback with live AI predictions in realtime.
+            Загрузите видео, выберите режим и смотрите воспроизведение с предсказаниями в реальном времени
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -316,57 +316,57 @@ export default function LiveMonitoring() {
               onClick={() => setRealtimeMode('gunshot')}
               disabled={isRunningRealtime}
             >
-              Gunshot Mode
+              Режим "Выстрел"
             </Button>
             <Button
               variant={realtimeMode === 'fire' ? 'default' : 'outline'}
               onClick={() => setRealtimeMode('fire')}
               disabled={isRunningRealtime}
             >
-              Fire Mode
+              Режим "Пожар"
             </Button>
             <Button
               variant={realtimeMode === 'fall' ? 'default' : 'outline'}
               onClick={() => setRealtimeMode('fall')}
               disabled={isRunningRealtime}
             >
-              Fall Mode
+              Режим "Падение"
             </Button>
             <Button
               variant={realtimeMode === 'fight' ? 'default' : 'outline'}
               onClick={() => setRealtimeMode('fight')}
               disabled={isRunningRealtime}
             >
-              Fight Mode
+              Режим "Драка"
             </Button>
             <Button
               variant={realtimeMode === 'crowd' ? 'default' : 'outline'}
               onClick={() => setRealtimeMode('crowd')}
               disabled={isRunningRealtime}
             >
-              Crowd
+              Режим "Скопление"
             </Button>
             <Button
               variant={realtimeMode === 'scream' ? 'default' : 'outline'}
               onClick={() => setRealtimeMode('scream')}
               disabled={isRunningRealtime}
             >
-              Scream Mode
+              Режим "Крик"
             </Button>
             <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isRunningRealtime}>
               <Upload className="h-4 w-4 mr-2" />
-              Choose Video
+              Выбрать видео
             </Button>
             <Button onClick={handleStartRealtimeDetection} disabled={!uploadedVideo || isRunningRealtime}>
               {isRunningRealtime ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Monitoring...
+                  Мониторинг...
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Start Realtime {REALTIME_MODE_META[realtimeMode].label}
+                  Запустить {REALTIME_MODE_META[realtimeMode].label}
                 </>
               )}
             </Button>
@@ -374,7 +374,7 @@ export default function LiveMonitoring() {
 
           {uploadedVideo && (
             <p className="text-sm text-[#4a5a6b]" title={uploadedVideo.name}>
-              Selected: {uploadedVideo.name}
+              Выбрано: {uploadedVideo.name}
             </p>
           )}
 
@@ -382,19 +382,19 @@ export default function LiveMonitoring() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-lg border bg-gray-50">
-              <div className="text-xs text-gray-500">Latest Tick Time</div>
+              <div className="text-xs text-gray-500">Последнее время</div>
               <div className="text-lg font-semibold text-gray-800">
                 {latestTickTime == null ? '--:--' : formatClock(latestTickTime)}
               </div>
             </div>
             <div className="p-3 rounded-lg border bg-gray-50">
-              <div className="text-xs text-gray-500">Latest Confidence</div>
+              <div className="text-xs text-gray-500">Уверенность</div>
               <div className="text-lg font-semibold text-gray-800">
                 {latestTickConfidence == null ? '--' : `${latestTickConfidence.toFixed(1)}%`}
               </div>
             </div>
             <div className="p-3 rounded-lg border bg-gray-50">
-              <div className="text-xs text-gray-500">Live Predictions</div>
+              <div className="text-xs text-gray-500">Предсказания</div>
               <div className="text-lg font-semibold text-gray-800">{realtimePredictions.length}</div>
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function LiveMonitoring() {
                   }`}
                 >
                   <div className={`text-sm font-medium ${item.isDetection ? 'text-red-800' : 'text-slate-700'}`}>
-                    Prediction: {item.label}
+                    Предсказание: {item.label}
                   </div>
                   <div className={`text-xs ${item.isDetection ? 'text-red-700' : 'text-slate-600'}`}>
                     {formatClock(item.time)} • {item.confidence.toFixed(1)}%
@@ -440,16 +440,16 @@ export default function LiveMonitoring() {
         </CardContent>
       </Card>
 
-      {/* Live Alerts */}
+      {/* Живые оповещения */}
       {liveAlerts.length > 0 && (
         <Card className="bg-white border border-[#4a5a6b]/30 shadow-sm">
           <CardHeader className="bg-red-50 border-b border-red-200">
             <CardTitle className="flex items-center gap-2 text-red-700 text-lg">
               <AlertTriangle className="h-5 w-5 text-[#4a5a6b]" />
-              Live Alerts
+              Живые оповещения
             </CardTitle>
             <CardDescription className="text-red-600">
-              Real-time security alerts from AI detection
+              Оповещения безопасности в реальном времени
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -459,22 +459,24 @@ export default function LiveMonitoring() {
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span className="font-medium text-red-900 truncate">{alert.type}</span>
-                      <Badge variant="destructive" className="flex-shrink-0">{alert.severity}</Badge>
+                      <Badge variant="destructive" className="flex-shrink-0">
+                        {alert.severity === 'high' ? 'Высокий' : alert.severity === 'medium' ? 'Средний' : 'Низкий'}
+                      </Badge>
                     </div>
                     <div className="text-sm text-red-700">
-                      Camera: {alert.camera} • {alert.time}
+                      Камера: {alert.camera} • {alert.time}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                       <Camera className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">View Feed</span>
-                      <span className="sm:hidden">View</span>
+                      <span className="hidden sm:inline">Просмотр</span>
+                      <span className="sm:hidden">Просмотр</span>
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                       <AlertTriangle className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">Investigate</span>
-                      <span className="sm:hidden">Investigate</span>
+                      <span className="hidden sm:inline">Расследовать</span>
+                      <span className="sm:hidden">Расследовать</span>
                     </Button>
                   </div>
                 </div>
@@ -484,7 +486,7 @@ export default function LiveMonitoring() {
         </Card>
       )}
 
-      {/* Camera Grid */}
+      {/* Сетка камер */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {cameraFeeds.map((camera) => (
           <Card key={camera.id} className="bg-white border border-[#4a5a6b]/30 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/50">
@@ -500,7 +502,7 @@ export default function LiveMonitoring() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <Badge 
+                  <Badge
                     variant={camera.status === 'online' ? 'default' : 'secondary'}
                     className={camera.status === 'online' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}
                   >
@@ -509,7 +511,7 @@ export default function LiveMonitoring() {
                     ) : (
                       <WifiOff className="h-3 w-3 mr-1" />
                     )}
-                    {camera.status}
+                    {camera.status === 'online' ? 'В сети' : 'Не в сети'}
                   </Badge>
                   {camera.anomalies > 0 && (
                     <Badge variant="destructive">
@@ -521,24 +523,24 @@ export default function LiveMonitoring() {
               </div>
             </CardHeader>
             <CardContent>
-              {/* Video Feed Placeholder */}
+              {/* Заглушка видеопотока */}
               <div className="relative bg-gray-900 rounded-lg mb-4 aspect-video">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
                     <Camera className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 opacity-50" />
                     <p className="text-xs sm:text-sm opacity-75">
-                      {camera.status === 'online' ? 'Live Feed' : 'Camera Offline'}
+                      {camera.status === 'online' ? 'Прямой эфир' : 'Камера не в сети'}
                     </p>
                     {camera.status === 'online' && (
                       <div className="flex items-center justify-center gap-2 mt-2">
                         <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs">REC</span>
+                        <span className="text-xs">ЗАПИСЬ</span>
                       </div>
                     )}
                   </div>
                 </div>
-                
-                {/* Video Controls */}
+
+                {/* Управление видео */}
                 {camera.status === 'online' && (
                   <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between bg-black bg-opacity-50 rounded px-2 py-1">
                     <div className="flex items-center gap-1 sm:gap-2">
@@ -564,10 +566,10 @@ export default function LiveMonitoring() {
                 )}
               </div>
 
-              {/* Camera Info */}
+              {/* Информация о камере */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div>
-                  <span className="text-gray-600">Resolution:</span>
+                  <span className="text-gray-600">Разрешение:</span>
                   <span className="ml-1 font-medium">{camera.resolution}</span>
                 </div>
                 <div>
@@ -575,26 +577,26 @@ export default function LiveMonitoring() {
                   <span className="ml-1 font-medium">{camera.fps}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Audio:</span>
+                  <span className="text-gray-600">Аудио:</span>
                   <span className={`ml-1 font-medium ${camera.audio ? 'text-green-600' : 'text-gray-500'}`}>
-                    {camera.audio ? 'Enabled' : 'Disabled'}
+                    {camera.audio ? 'Включено' : 'Выключено'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Last Motion:</span>
+                  <span className="text-gray-600">Движение:</span>
                   <span className="ml-1 font-medium">{camera.lastMotion}</span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Кнопки действий */}
               <div className="flex flex-col sm:flex-row items-center gap-2 mt-4">
                 <Button variant="outline" size="sm" className="w-full sm:flex-1">
                   <Camera className="h-3 w-3 mr-1" />
-                  Full Screen
+                  Полный экран
                 </Button>
                 <Button variant="outline" size="sm" className="w-full sm:flex-1">
                   <Settings className="h-3 w-3 mr-1" />
-                  Settings
+                  Настройки
                 </Button>
               </div>
             </CardContent>
@@ -602,34 +604,34 @@ export default function LiveMonitoring() {
         ))}
       </div>
 
-      {/* System Status */}
+      {/* Статус системы */}
       <Card className="bg-white border border-[#4a5a6b]/30 shadow-sm">
         <CardHeader className="bg-green-50 border-b border-green-200">
             <CardTitle className="flex items-center gap-2 text-green-700 text-lg">
               <Activity className="h-5 w-5 text-[#0a1a3a]" />
-              System Status
+              Статус системы
             </CardTitle>
           <CardDescription className="text-green-600">
-            AI detection system performance metrics
+            Метрики производительности системы
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
             <div className="text-center p-3 sm:p-4 border border-gray-200 rounded-lg bg-green-50">
               <div className="text-xl sm:text-2xl font-bold text-green-600">4</div>
-              <div className="text-xs sm:text-sm text-green-700 font-medium">Active Cameras</div>
+              <div className="text-xs sm:text-sm text-green-700 font-medium">Активных камер</div>
             </div>
             <div className="text-center p-3 sm:p-4 border border-gray-200 rounded-lg bg-blue-50">
               <div className="text-xl sm:text-2xl font-bold text-blue-600">98.5%</div>
-              <div className="text-xs sm:text-sm text-blue-700 font-medium">Detection Accuracy</div>
+              <div className="text-xs sm:text-sm text-blue-700 font-medium">Точность обнаружения</div>
             </div>
             <div className="text-center p-3 sm:p-4 border border-gray-200 rounded-lg bg-purple-50">
-              <div className="text-xl sm:text-2xl font-bold text-purple-600">2.1s</div>
-              <div className="text-xs sm:text-sm text-purple-700 font-medium">Avg Response Time</div>
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">2.1с</div>
+              <div className="text-xs sm:text-sm text-purple-700 font-medium">Среднее время ответа</div>
             </div>
             <div className="text-center p-3 sm:p-4 border border-gray-200 rounded-lg bg-orange-50">
               <div className="text-xl sm:text-2xl font-bold text-orange-600">2</div>
-              <div className="text-xs sm:text-sm text-orange-700 font-medium">Active Alerts</div>
+              <div className="text-xs sm:text-sm text-orange-700 font-medium">Активных оповещений</div>
             </div>
           </div>
         </CardContent>
@@ -637,4 +639,3 @@ export default function LiveMonitoring() {
     </div>
   )
 }
-

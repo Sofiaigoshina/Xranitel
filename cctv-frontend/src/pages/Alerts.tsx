@@ -18,6 +18,19 @@ import {
   Loader2,
 } from 'lucide-react'
 
+const getRussianType = (type: string): string => {
+  const types: Record<string, string> = {
+    'Weapon Detected': 'Обнаружено оружие',
+    'Fight': 'Драка',
+    'Gunshot': 'Выстрел',
+    'Sudden Fall': 'Падение',
+    'Scream': 'Крик',
+    'Explosion/Fire': 'Пожар (взрыв)',
+    'Crowd Gathering': 'Скопление людей',
+  }
+  return types[type] || type
+}
+
 type AlertStatus = 'active' | 'resolved'
 type AlertSeverity = 'critical' | 'high' | 'medium' | 'low'
 
@@ -81,7 +94,7 @@ export default function Alerts() {
   const loadAlerts = async (signal?: AbortSignal) => {
     const res = await fetch(buildAlertsUrl(), signal ? { signal } : undefined)
     if (!res.ok) {
-      throw new Error(await getErrorMessage(res, 'Failed to load alerts'))
+      throw new Error(await getErrorMessage(res, 'Не удалось загрузить оповещения'))
     }
 
     const json = (await res.json()) as AlertsResponse
@@ -98,7 +111,7 @@ export default function Alerts() {
         await loadAlerts(controller.signal)
       } catch (err: unknown) {
         if ((err as Error).name === 'AbortError') return
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
       } finally {
         setLoading(false)
       }
@@ -132,18 +145,19 @@ export default function Alerts() {
   }, [alertsData.alerts, searchInput])
 
   const formatRelativeTime = (iso: string | null) => {
-    if (!iso) return 'Unknown time'
+    if (!iso) return 'Неизвестное время'
     const dt = new Date(iso)
-    if (Number.isNaN(dt.getTime())) return 'Unknown time'
+    if (Number.isNaN(dt.getTime())) return 'Неизвестное время'
     const diffMs = Date.now() - dt.getTime()
     const sec = Math.max(1, Math.floor(diffMs / 1000))
-    if (sec < 60) return `${sec}s ago`
+    if (sec < 60) return `${sec} сек назад`
     const min = Math.floor(sec / 60)
-    if (min < 60) return `${min} min ago`
+    if (min < 60) return `${min} мин назад`
     const hr = Math.floor(min / 60)
-    if (hr < 24) return `${hr}h ago`
+    if (hr < 24) return `${hr} ч назад`
     const day = Math.floor(hr / 24)
-    return `${day}d ago`
+    const dayText = day === 1 ? 'день' : (day >= 2 && day <= 4) ? 'дня' : 'дней'
+    return `${day} ${dayText} назад`
   }
 
   const getSeverityColor = (severity: string) => {
@@ -177,7 +191,7 @@ export default function Alerts() {
   }
 
   const getTypeIcon = (type: string) => {
-    if (type.includes('Sound') || type.includes('Audio')) {
+    if (type.includes('Sound') || type.includes('Audio') || type.includes('Звук') || type.includes('Аудио')) {
       return Volume2
     }
     return AlertTriangle
@@ -195,11 +209,11 @@ export default function Alerts() {
           typeof err?.detail === 'string'
             ? err.detail
             : err?.detail?.message || err?.message || res.statusText
-        throw new Error(detail || 'Failed to update alert status')
+        throw new Error(detail || 'Не удалось обновить статус оповещения')
       }
       await refetchAlerts()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update alert status')
+      setError(err instanceof Error ? err.message : 'Не удалось обновить статус оповещения')
     } finally {
       setResolvingAlertId(null)
     }
@@ -228,17 +242,35 @@ export default function Alerts() {
     setShowSuggestions(false)
   }
 
+  const getSeverityText = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'Критический'
+      case 'high': return 'Высокий'
+      case 'medium': return 'Средний'
+      case 'low': return 'Низкий'
+      default: return severity
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Активный'
+      case 'resolved': return 'Решён'
+      default: return status
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="px-4 sm:px-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Security Alerts</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Оповещения безопасности</h2>
         <p className="text-sm sm:text-base text-gray-600 mt-1">
-          AI-detected anomalies from your video analysis
+          Угрозы, обнаруженные системой, при анализе видео
         </p>
         <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
-      {/* Search */}
+      {/* Поиск */}
       <div className="w-full flex justify-center px-4 sm:px-0">
         <div className="relative w-full">
           <Search className="h-5 w-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -253,7 +285,7 @@ export default function Alerts() {
             }}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
-            placeholder="Search alerts by video name..."
+            placeholder="Поиск оповещений по видео..."
             className="w-full h-12 rounded-xl border border-gray-300 bg-white pl-12 pr-4 text-base text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/40 shadow-sm"
           />
 
@@ -278,13 +310,13 @@ export default function Alerts() {
         </div>
       </div>
 
-      {/* Alert Summary */}
+      {/* Сводка оповещений */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="bg-white border border-[#4a5a6b]/30 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Alerts</p>
+                <p className="text-sm font-medium text-gray-600">Всего оповещений</p>
                 <p className="text-2xl font-bold text-gray-900">{alertsData.summary.total}</p>
               </div>
               <div className="p-2 rounded-lg bg-[#4a5a6b]/10 border border-[#4a5a6b]/20">
@@ -297,7 +329,7 @@ export default function Alerts() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Alerts</p>
+                <p className="text-sm font-medium text-gray-600">Активных оповещений</p>
                 <p className="text-2xl font-bold text-red-600">
                   {alertsData.summary.active}
                 </p>
@@ -312,7 +344,7 @@ export default function Alerts() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Resolved</p>
+                <p className="text-sm font-medium text-gray-600">Решённых</p>
                 <p className="text-2xl font-bold text-green-600">
                   {alertsData.summary.resolved}
                 </p>
@@ -325,7 +357,7 @@ export default function Alerts() {
         </Card>
       </div>
 
-      {/* Filter */}
+      {/* Фильтр */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -336,24 +368,24 @@ export default function Alerts() {
             onClick={() => setStatusFilter('all')}
           >
             <Filter className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">All</span>
+            <span className="hidden sm:inline">Все</span>
           </Button>
           <Button variant={statusFilter === 'active' ? 'default' : 'outline'} size="sm" className={statusFilter === 'active' ? 'bg-red-600 hover:bg-red-700' : 'border-gray-300'} onClick={() => setStatusFilter('active')}>
-            Active
+            Активные
           </Button>
           <Button variant={statusFilter === 'resolved' ? 'default' : 'outline'} size="sm" className={statusFilter === 'resolved' ? 'bg-green-600 hover:bg-green-700' : 'border-gray-300'} onClick={() => setStatusFilter('resolved')}>
-            Resolved
+            Решённые
           </Button>
           </div>
         </div>
       </div>
 
-      {/* Alerts List */}
+      {/* Список оповещений */}
       <div className="space-y-4">
         {loading && (
           <Card className="bg-white border border-[#4a5a6b]/30 shadow-sm">
             <CardContent className="p-6 flex items-center gap-2 text-gray-600">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading alerts from backend...
+              <Loader2 className="h-4 w-4 animate-spin" /> Загрузка оповещений с сервера...
             </CardContent>
           </Card>
         )}
@@ -361,14 +393,16 @@ export default function Alerts() {
         {!loading && error && (
           <Card className="bg-white border border-red-200 shadow-sm">
             <CardContent className="p-6 text-sm text-red-700">
-              Failed to load alerts: {error}
+              Не удалось загрузить оповещения: {error}
             </CardContent>
           </Card>
         )}
 
         {!loading && !error && alerts.length === 0 && (
           <Card className="bg-white border border-[#4a5a6b]/30 shadow-sm">
-            <CardContent className="p-6 text-sm text-gray-600">No alerts found for this filter.</CardContent>
+            <CardContent className="p-6 text-sm text-gray-600">
+              Оповещений для этого фильтра не найдено.
+            </CardContent>
           </Card>
         )}
 
@@ -377,34 +411,33 @@ export default function Alerts() {
           return (
             <Card key={alert.id} className={`bg-white border border-[#4a5a6b]/30 shadow-sm ${getAlertCardBg(alert.status, alert.severity)}`}>
               <CardContent className="p-4">
-                {/* Mobile-first layout */}
                 <div className="space-y-3">
-                  {/* Header with type and badges */}
+                  {/* Заголовок с типом и статусом */}
                   <div className="flex flex-col space-y-2">
                     <div className="flex items-center gap-2">
                       <TypeIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
                       <h3 className="font-semibold text-gray-900 text-base">{alert.type}</h3>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge 
+                      <Badge
                         variant={getSeverityColor(alert.severity)}
                         className="text-xs"
                       >
-                        {alert.severity}
+                        {getSeverityText(alert.severity)}
                       </Badge>
-                      <Badge 
+                      <Badge
                         variant={getStatusColor(alert.status)}
                         className="text-xs"
                       >
-                        {alert.status}
+                        {getStatusText(alert.status)}
                       </Badge>
                     </div>
                   </div>
 
-                  {/* Description */}
+                  {/* Описание */}
                   <p className="text-sm text-gray-700 leading-relaxed">{alert.description}</p>
 
-                  {/* File info - stacked on mobile */}
+                  {/* Информация о файле */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-1 text-sm text-gray-600">
                       <FileVideo className="h-3 w-3 flex-shrink-0" />
@@ -416,15 +449,15 @@ export default function Alerts() {
                         {formatRelativeTime(alert.timestamp)}
                       </div>
                       <div className="text-gray-500">
-                        Video Time: {alert.video_time}
+                        Время на видео: {alert.video_time}
                       </div>
                     </div>
                   </div>
 
-                  {/* Confidence and actions */}
+                  {/* Уверенность и действия */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-200">
                     <div className="text-sm font-medium text-gray-900">
-                      Confidence: {alert.confidence}%
+                      Уверенность: {alert.confidence}%
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -445,7 +478,7 @@ export default function Alerts() {
                         ) : (
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                         )}
-                        {alert.status === 'resolved' ? 'Mark Active' : 'Mark Resolved'}
+                        {alert.status === 'resolved' ? 'Сделать активным' : 'Отметить решённым'}
                       </Button>
                       <Button
                         variant="outline"
@@ -453,10 +486,10 @@ export default function Alerts() {
                         className="border-gray-300 flex-1 sm:flex-none"
                         onClick={() => handleViewAlert(alert)}
                         disabled={!alert.video_id}
-                        title={alert.video_id ? 'Open video at alert timestamp' : 'Video not available'}
+                        title={alert.video_id ? 'Открыть видео на временной метке' : 'Видео недоступно'}
                       >
                         <Eye className="h-3 w-3 mr-1" />
-                        View
+                        Просмотр
                       </Button>
                     </div>
                   </div>

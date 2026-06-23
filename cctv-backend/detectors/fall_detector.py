@@ -276,8 +276,8 @@ def stream_inference(
                 "time": round(t_sec, 2),
                 "end_time": round(end_t, 2),
                 "confidence": round(conf * 100.0, 1),
-                "label": "Sudden Fall" if is_detection else "Normal Posture",
-                "prediction_label": "Sudden Fall" if is_detection else "Normal Posture",
+                "label": "Падение" if is_detection else "Нормальная поза",
+                "prediction_label": "Падение" if is_detection else "Нормальная поза",
                 "is_detection": is_detection,
                 "bbox": last_bbox,
             }
@@ -307,6 +307,6 @@ def detect(video_path: str, model_dir: str):
             "time": frame_result.get("time", 0.0),
             "end_time": frame_result.get("end_time"),
             "confidence": frame_result.get("confidence", 0.0),
-            "label": "Sudden Fall",
+            "label": "Падение",
             "bbox": frame_result.get("bbox"),
         }

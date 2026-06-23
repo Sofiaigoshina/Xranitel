@@ -342,8 +342,8 @@ def stream_inference(
             "time": round(emit_time, 2),
             "end_time": round(float(end_sec), 2),
             "confidence": confidence_pct,
-            "label": "Scream" if is_scream else "No Scream",
-            "prediction_label": "Scream" if is_scream else "No Scream",
+            "label": "Крик" if is_scream else "Нет крика",
+            "prediction_label": "Крик" if is_scream else "Нет крика",
             "is_detection": is_scream,
         }
 
@@ -365,5 +365,5 @@ def detect(video_path: str, model_dir: str):
             "time": frame_result.get("time", 0.0),
             "end_time": frame_result.get("end_time"),
             "confidence": frame_result.get("confidence", 0.0),
-            "label": "Scream",
+            "label": "Крик",
         }

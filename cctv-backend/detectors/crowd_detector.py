@@ -329,8 +329,8 @@ def stream_inference(
                 "time": round(t_sec, 2),
                 "end_time": round(end_t, 2),
                 "confidence": round(confidence, 1),
-                "label": "Crowd Gathering" if is_alert else "No Crowd",
-                "prediction_label": "Crowd Gathering" if is_alert else "No Crowd",
+                "label": "Скопление людей" if is_alert else "Нет скопления",
+                "prediction_label": "Скопление людей" if is_alert else "Нет скопления",
                 "is_detection": is_alert,
                 "bbox": bbox,
             }
@@ -359,6 +359,6 @@ def detect(video_path: str, model_dir: str) -> Iterator[dict]:
             "time": frame_result.get("time", 0.0),
             "end_time": frame_result.get("end_time"),
             "confidence": frame_result.get("confidence", 0.0),
-            "label": "Crowd Gathering",
+            "label": "Скопление людей",
             "bbox": frame_result.get("bbox"),
         }

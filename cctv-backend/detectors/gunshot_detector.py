@@ -280,7 +280,7 @@ def _gunshot_event(start_t: float, end_t: float, probability: float) -> dict:
         "time": round(start_t, 2),
         "end_time": round(end_t, 2),
         "confidence": round(probability * 100.0, 1),
-        "label": "Gunshot",
+        "label": "Выстрел",
     }
 
 

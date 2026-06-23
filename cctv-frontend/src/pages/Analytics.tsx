@@ -8,12 +8,12 @@ interface OverviewResponse {
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
 const anomalyCatalog = [
-  { id: 'gunshot_audio', label: 'Gunshot', aliases: ['gunshot_audio', 'gunshot'], barClass: 'bg-gradient-to-r from-red-500 to-rose-500' },
-  { id: 'fight_visual', label: 'Fight', aliases: ['fight_visual', 'fight'], barClass: 'bg-gradient-to-r from-orange-500 to-amber-500' },
-  { id: 'sudden_fall_visual', label: 'Sudden Fall', aliases: ['sudden_fall_visual', 'fall'], barClass: 'bg-gradient-to-r from-yellow-500 to-lime-500' },
-  { id: 'scream_audio', label: 'Scream', aliases: ['scream_audio', 'scream'], barClass: 'bg-gradient-to-r from-purple-500 to-fuchsia-500' },
-  { id: 'explosion_fire_visual', label: 'Explosion/Fire', aliases: ['explosion_fire_visual', 'explosion_fire', 'explosion', 'fire'], barClass: 'bg-gradient-to-r from-pink-500 to-rose-600' },
-  { id: 'crowd_gathering_visual', label: 'Crowd Gathering', aliases: ['crowd_gathering_visual', 'crowd'], barClass: 'bg-gradient-to-r from-blue-500 to-cyan-500' },
+  { id: 'gunshot_audio', label: 'Выстрел', aliases: ['gunshot_audio', 'gunshot'], barClass: 'bg-gradient-to-r from-red-500 to-rose-500' },
+  { id: 'fight_visual', label: 'Драка', aliases: ['fight_visual', 'fight'], barClass: 'bg-gradient-to-r from-orange-500 to-amber-500' },
+  { id: 'sudden_fall_visual', label: 'Падение', aliases: ['sudden_fall_visual', 'fall'], barClass: 'bg-gradient-to-r from-yellow-500 to-lime-500' },
+  { id: 'scream_audio', label: 'Крик', aliases: ['scream_audio', 'scream'], barClass: 'bg-gradient-to-r from-purple-500 to-fuchsia-500' },
+  { id: 'explosion_fire_visual', label: 'Пожар (взрыв)', aliases: ['explosion_fire_visual', 'explosion_fire', 'explosion', 'fire'], barClass: 'bg-gradient-to-r from-pink-500 to-rose-600' },
+  { id: 'crowd_gathering_visual', label: 'Скопление людей', aliases: ['crowd_gathering_visual', 'crowd'], barClass: 'bg-gradient-to-r from-blue-500 to-cyan-500' },
 ]
 
 export default function Analytics() {
@@ -36,14 +36,14 @@ export default function Analytics() {
             typeof err?.detail === 'string'
               ? err.detail
               : err?.detail?.message || err?.message || res.statusText
-          throw new Error(detail || 'Failed to load anomaly frequency')
+          throw new Error(detail || 'Не удалось загрузить частоту аномалий')
         }
 
         const json = (await res.json()) as OverviewResponse
         setOverview({ anomaly_breakdown: json.anomaly_breakdown || [] })
       } catch (err: unknown) {
         if ((err as Error).name === 'AbortError') return
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
       } finally {
         setLoading(false)
       }
@@ -73,28 +73,28 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <div className="px-4 sm:px-0">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Analytics</h2>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Frequency distribution of anomaly detections</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Аналитика</h2>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">Распределение частоты обнаружения угроз</p>
         <div className="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
       </div>
 
       {loading && (
         <div className="bg-white border border-[#4a5a6b]/30 shadow-sm rounded-xl p-6 flex items-center gap-2 text-gray-600">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading analytics from backend...
+          <Loader2 className="h-4 w-4 animate-spin" /> Загрузка аналитики с сервера...
         </div>
       )}
 
       {!loading && error && (
-        <div className="bg-white border border-red-200 shadow-sm rounded-xl p-6 text-sm text-red-700">Failed to load analytics: {error}</div>
+        <div className="bg-white border border-red-200 shadow-sm rounded-xl p-6 text-sm text-red-700">Ошибка загрузки аналитики: {error}</div>
       )}
 
       <section className="space-y-3">
         <div>
           <h3 className="flex items-center gap-2 text-gray-800 text-lg sm:text-xl font-semibold">
             <BarChart3 className="h-5 w-5 text-[#4a5a6b]" />
-            Anomaly Frequency
+            Частота угроз
           </h3>
-          <p className="text-sm text-gray-600 mt-1">Frequency of all 6 anomaly types from recent detections</p>
+          <p className="text-sm text-gray-600 mt-1">Частота всех типов угроз на основе последних обнаружений</p>
         </div>
 
         <div className="rounded-lg border border-[#4a5a6b]/15 bg-gray-50/70 p-4 sm:p-6 shadow-sm mx-auto max-w-4xl">

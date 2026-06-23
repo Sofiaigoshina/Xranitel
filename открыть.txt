@@ -1,0 +1,21 @@
+0. в терминале повершел от имени администратора
+
+mongosh --version
+
+mongosh
+
+
+1. Открыть PowerShell (1):
+
+cd C:\Diplom\vision-guard-ai\cctv-backend
+venv\Scripts\activate
+$env:MONGODB_URI="mongodb://127.0.0.1:27017"
+$env:MONGODB_DB_NAME="cctv"
+uvicorn main:app --reload --port 5000
+
+2. Открыть PowerShell (2):
+
+cd C:\Diplom\vision-guard-ai\cctv-frontend
+npm run dev
+
+

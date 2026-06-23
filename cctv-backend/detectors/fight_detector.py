@@ -390,8 +390,8 @@ def stream_inference(
                         "time": round(start_frame / fps, 2),
                         "end_time": round((start_frame + stride) / fps, 2),
                         "confidence": round(conf * 100.0, 1),
-                        "label": "Fight" if conf >= CONF_THRESHOLD else "No Fight",
-                        "prediction_label": "Fight" if conf >= CONF_THRESHOLD else "No Fight",
+                        "label": "Драка" if conf >= CONF_THRESHOLD else "Нет драки",
+                        "prediction_label": "Драка" if conf >= CONF_THRESHOLD else "Нет драки",
                         "is_detection": conf >= CONF_THRESHOLD,
                         "bbox": bbox,
                     }
@@ -462,6 +462,6 @@ def detect(video_path: str, model_dir: str):
             "time": frame_result.get("time", 0.0),
             "end_time": frame_result.get("end_time"),
             "confidence": frame_result.get("confidence", 0.0),
-            "label": "Fight",
+            "label": "Драка",
             "bbox": frame_result.get("bbox"),
         }

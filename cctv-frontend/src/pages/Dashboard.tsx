@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { 
-  Upload, 
-  AlertTriangle, 
-  Activity, 
+
+import {
+  Upload,
+  AlertTriangle,
+  Activity,
   Shield,
   Clock,
   FileVideo,
@@ -19,7 +20,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
 const DEFAULT_STATS = {
   accuracy: '88.9%',
-  processingTime: '4s',
+  processingTime: '4с',
 }
 
 type OverviewResponse = {
@@ -39,6 +40,58 @@ type OverviewResponse = {
     total_detections?: number
     selected_anomalies?: string[]
   }>
+}
+
+// Данные камер с видеофайлами
+const cameras = [
+  { id: 1, name: 'Вход главный', status: 'online', location: 'Здание А - 1 этаж', videoFile: '/videos/cam1.mp4' },
+  { id: 2, name: 'Коридор - 1 этаж', status: 'online', location: 'Здание А - 1 этаж', videoFile: '/videos/cam2.mp4' },
+  { id: 3, name: 'Спортзал', status: 'online', location: 'Здание А - 1 этаж', videoFile: '/videos/cam3.mp4' },
+  { id: 4, name: 'Кабинет 10', status: 'online', location: 'Здание А - 2 этаж', videoFile: '/videos/cam4.mp4' },
+  { id: 5, name: 'Актовый зал', status: 'online', location: 'Здание А - 2 этаж', videoFile: '/videos/cam5.mp4' },
+  { id: 6, name: 'Коридор - 2 этаж', status: 'online', location: 'Здание А - 2 этаж', videoFile: '/videos/cam6.mp4' },
+  { id: 7, name: 'Столовая', status: 'online', location: 'Здание А - 1 этаж', videoFile: '/videos/cam7.mp4' },
+  { id: 8, name: 'Коридор', status: 'online', location: 'Здание А - 1 этаж', videoFile: '/videos/cam8.mp4' },
+  { id: 9, name: 'Хозяйственная зона', status: 'online', location: 'Территория', videoFile: '/videos/cam9.mp4' },
+  { id: 10, name: 'Задний двор', status: 'online', location: 'Территория', videoFile: '/videos/cam10.mp4' },
+  { id: 11, name: 'Выход из спортзала', status: 'online', location: 'Территория', videoFile: '/videos/cam11.mp4' },
+  { id: 12, name: 'Северная сторона', status: 'online', location: 'Территория', videoFile: '/videos/cam12.mp4' },
+]
+
+// Компонент для видеоплеера с автовоспроизведением и зацикливанием
+function CameraVideo({ src, isOnline }: { src: string | null; isOnline: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (videoRef.current && isOnline && src) {
+      videoRef.current.play().catch(e => console.log('Video play error:', e))
+    }
+  }, [src, isOnline])
+
+  if (!isOnline || !src) {
+    return (
+      <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-black rounded-lg aspect-video flex items-center justify-center mb-2 overflow-hidden">
+      <video
+        ref={videoRef}
+        src={src}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="w-full h-full object-cover"
+      />
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -61,13 +114,13 @@ export default function Dashboard() {
             typeof err?.detail === 'string'
               ? err.detail
               : err?.detail?.message || err?.message || res.statusText
-          throw new Error(detail || 'Failed to load dashboard data')
+          throw new Error(detail || 'Не удалось загрузить данные панели управления')
         }
         const data: OverviewResponse = await res.json()
         if (!cancelled) setOverview(data)
       } catch (err) {
         if (!cancelled) {
-          const message = err instanceof Error ? err.message : 'Failed to load dashboard data'
+          const message = err instanceof Error ? err.message : 'Не удалось загрузить данные панели управления'
           setError(message)
         }
       } finally {
@@ -82,41 +135,42 @@ export default function Dashboard() {
   }, [API_BASE])
 
   const formatTimeAgo = (isoDate?: string): string => {
-    if (!isoDate) return 'Unknown'
+    if (!isoDate) return 'Неизвестно'
     const diffMs = Date.now() - new Date(isoDate).getTime()
     const mins = Math.floor(diffMs / 60000)
-    if (mins < 1) return 'just now'
-    if (mins < 60) return `${mins} min ago`
+    if (mins < 1) return 'только что'
+    if (mins < 60) return `${mins} мин назад`
     const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs} hr ago`
+    if (hrs < 24) return `${hrs} ч назад`
     const days = Math.floor(hrs / 24)
-    return `${days} day${days > 1 ? 's' : ''} ago`
+    const daysText = days === 1 ? 'день' : (days >= 2 && days <= 4) ? 'дня' : 'дней'
+    return `${days} ${daysText} назад`
   }
 
   const stats = [
     {
-      title: 'Videos Analyzed',
+      title: 'Видео проанализировано',
       value: String(overview?.total_videos ?? 0),
       icon: FileVideo,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
     },
     {
-      title: 'Anomalies Detected',
+      title: 'Обнаружено угроз',
       value: String(overview?.total_detections ?? 0),
       icon: AlertTriangle,
       color: 'text-red-600',
       bg: 'bg-red-50',
     },
     {
-      title: 'Accuracy',
+      title: 'Точность',
       value: DEFAULT_STATS.accuracy,
       icon: Shield,
       color: 'text-green-600',
       bg: 'bg-green-50',
     },
     {
-      title: 'Processing time/s',
+      title: 'Время обработки',
       value: DEFAULT_STATS.processingTime,
       icon: Activity,
       color: 'text-purple-600',
@@ -129,8 +183,8 @@ export default function Dashboard() {
     .slice(0, 3)
     .map((v) => ({
       id: v.id,
-      filename: v.original_filename || v.stored_filename || 'unknown_video.mp4',
-      status: v.status || 'unknown',
+      filename: v.original_filename || v.stored_filename || 'неизвестное_видео.mp4',
+      status: v.status || 'неизвестно',
       anomalies: v.total_detections || 0,
       time: formatTimeAgo(v.created_at),
       confidence: 0,
@@ -149,6 +203,19 @@ export default function Dashboard() {
     }
   }
 
+  const statusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'Завершено'
+      case 'processing':
+        return 'Обработка'
+      case 'failed':
+        return 'Ошибка'
+      default:
+        return status
+    }
+  }
+
   const handleViewAnalysis = (analysis: { id: string; filename: string; status: string; anomalies: number }) => {
     navigate(`/analysis?videoId=${encodeURIComponent(analysis.id)}&file=${encodeURIComponent(analysis.filename)}`, {
       state: {
@@ -163,15 +230,15 @@ export default function Dashboard() {
 
   const quickActions = [
     {
-      title: 'Upload Video',
-      description: 'Upload CCTV footage for AI analysis',
+      title: 'Загрузить видео',
+      description: 'Загрузите видео с камер для анализа',
       icon: Upload,
       href: '/analysis',
       primary: true,
     },
     {
-      title: 'View Analytics',
-      description: 'Check system performance metrics',
+      title: 'Просмотр аналитики',
+      description: 'Проверьте метрики производительности системы',
       icon: BarChart3,
       href: '/analytics',
       primary: false,
@@ -180,17 +247,45 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* ПРИВЕТСТВИЕ */}
       <div className="text-center px-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome to VisionGuard AI</h2>
-        <p className="text-base sm:text-lg text-gray-600 mt-2">
-          Upload your CCTV footage and let AI detect anomalies automatically
-        </p>
-        {loading && <p className="mt-2 text-sm text-gray-500">Loading dashboard data…</p>}
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Добро пожаловать в интеллектуальную систему «Хранитель»!</h2>
         <div className="mt-4 h-1 w-20 bg-[#4a5a6b] rounded-full mx-auto"></div>
       </div>
 
-      {/* Stats Overview */}
+      {/* БЛОК ВИДЕОНАБЛЮДЕНИЯ */}
+      <div>
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Видеонаблюдение</h3>
+        <div className="mt-3 h-1 w-50 bg-[#4a5a6b] rounded-full mb-6"></div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cameras.map((cam) => (
+            <div key={cam.id} className="rounded-xl bg-white p-4 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-gray-900">{cam.name}</h4>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  cam.status === 'online'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {cam.status === 'online' ? 'Online' : 'Offline'}
+                </span>
+              </div>
+
+              {/* Видео или заглушка */}
+              <CameraVideo src={cam.videoFile} isOnline={cam.status === 'online'} />
+              <p className="text-xs text-gray-400 text-center mt-1">{cam.location}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+  
+
+      {/* СТАТИСТИКА */}
+      {loading && <p className="mt-2 text-sm text-gray-500 text-center">Загрузка данных панели управления…</p>}
+      {error && <p className="mt-2 text-sm text-red-600 text-center">{error}</p>}
+
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="bg-white border border-[#4a5a6b]/30 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/50">
@@ -209,16 +304,17 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* НЕДАВНИЕ АНАЛИЗЫ И БЫСТРЫЕ ДЕЙСТВИЯ */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 items-stretch">
-        {/* Recent Analyses */}
+        {/* Недавние анализы */}
         <Card className="h-full bg-white border border-[#4a5a6b]/30 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/50">
           <CardHeader className="pb-3 sm:pb-4 border-b border-[#4a5a6b]/20">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-lg">
               <FileVideo className="h-5 w-5 text-[#4a5a6b]" />
-              Recent Analyses
+              Недавние анализы
             </CardTitle>
             <CardDescription>
-              Latest video processing results
+              Результаты последней обработки видео
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4 sm:pt-5 flex flex-col">
@@ -228,17 +324,17 @@ export default function Dashboard() {
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span className="font-medium text-gray-900 truncate">{analysis.filename}</span>
-                      <Badge 
+                      <Badge
                         variant={analysis.status === 'completed' ? 'default' : 'secondary'}
                         className={`${statusBadgeClass(analysis.status)} border flex-shrink-0`}
                       >
-                        {analysis.status}
+                        {statusText(analysis.status)}
                       </Badge>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
-                      <span>Anomalies: {analysis.anomalies}</span>
+                      <span>Угроз: {analysis.anomalies}</span>
                       {analysis.confidence > 0 && (
-                        <span>Confidence: {analysis.confidence}%</span>
+                        <span>Уверенность: {analysis.confidence}%</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -252,28 +348,28 @@ export default function Dashboard() {
                     className="flex-shrink-0 w-full sm:w-auto border-[#4a5a6b]/30 text-[#4a5a6b] hover:bg-[#4a5a6b] hover:text-white rounded-lg"
                     onClick={() => handleViewAnalysis(analysis)}
                   >
-                    View
+                    Просмотр
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
                   </Button>
                 </div>
               )) : (
                 <p className="text-sm text-gray-500 text-center py-6">
-                  No analyses found yet. Upload a video in Video Analysis to populate this list.
+                  Анализы пока не найдены. Загрузите видео в разделе "Анализ видео", чтобы заполнить этот список.
                 </p>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
+        {/* Быстрые действия */}
         <Card className="h-full bg-white border border-[#4a5a6b]/30 shadow-sm hover:shadow-md transition-shadow hover:border-[#4a5a6b]/50">
           <CardHeader className="pb-3 sm:pb-4 border-b border-[#4a5a6b]/20">
             <CardTitle className="flex items-center gap-2 text-gray-800 text-lg">
               <Activity className="h-5 w-5 text-[#4a5a6b]" />
-              Quick Actions
+              Быстрые действия
             </CardTitle>
             <CardDescription>
-              Access system features
+              Доступ к функциям системы
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4 sm:pt-5 flex flex-col">
@@ -297,7 +393,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2">
                         <div className="font-semibold text-sm sm:text-base text-gray-800">{action.title}</div>
                         {action.primary && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#4a5a6b] text-white tracking-wide">PRIMARY</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#4a5a6b] text-white tracking-wide">ОСНОВНОЕ</span>
                         )}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600 truncate">{action.description}</div>

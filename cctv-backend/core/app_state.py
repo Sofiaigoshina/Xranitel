@@ -119,8 +119,8 @@ def require_db() -> tuple[Collection, Collection]:
         raise HTTPException(
             status_code=503,
             detail={
-                "message": "MongoDB is not connected.",
-                "hint": "Check mongod is running and MONGODB_URI in cctv-backend/.env",
+                "message": "MongoDB не подключена.",
+                "hint": "Проверьте, запущен ли MongoDB и правильно ли указан MONGODB_URI в файле cctv-backend/.env",
                 "last_error": mongo_last_error,
             },
         )
@@ -240,19 +240,19 @@ def generate_processed_video_file(source_path: Path, output_path: Path, events: 
     """Render full processed output video with overlays from saved detections."""
     cap = cv2.VideoCapture(str(source_path))
     if not cap.isOpened():
-        raise RuntimeError(f"Cannot open source video: {source_path}")
+        raise RuntimeError(f"Не удается открыть исходное видео: {source_path}")
 
     try:
         fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
         if width <= 0 or height <= 0:
-            raise RuntimeError("Invalid source video dimensions")
+            raise RuntimeError("Неверные размеры исходного видео")
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         writer = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
         if not writer.isOpened():
-            raise RuntimeError("Unable to create processed output video file")
+            raise RuntimeError("Не удается создать выходной видеофайл с обработкой")
 
         try:
             events_sorted = sorted(events, key=lambda e: safe_float(e.get("time"), 0.0))

@@ -1,0 +1,97 @@
+Architecture - Parallel Anomaly Processing
+Date: 2026-05-15
+
+PURPOSE
+Explain how multiple anomalies run in parallel on the same video, including system architecture and full execution flow.
+
+
+1) SYSTEM ARCHITECTURE (HIGH LEVEL)
+
++---------------------+        +-----------------------------+        +----------------------+
+|  Frontend (React)   | -----> |  Backend (FastAPI)          | -----> |  MongoDB             |
+|  VideoAnalysis page |        |  /process-video (SSE)       |        |  videos + detections |
+|  LiveMonitoring     |        |  /process-video-realtime    |        +----------------------+
++---------------------+        +-----------------------------+
+                                     |
+                                     v
+                              +---------------------+
+                              |  Detector Threads   |
+                              |  (Parallel)         |
+                              +---------------------+
+                                     |
+                                     v
+                              +---------------------+
+                              |  Model Files        |
+                              |  .pth / .pt / .keras|
+                              +---------------------+
+
+
+2) COMPLETE PARALLEL EXECUTION FLOW (VIDEO ANALYSIS)
+
+Frontend:
+1) User selects multiple anomalies (fight, fire, crowd, fall, scream, gunshot).
+2) VideoAnalysis sends POST /process-video with FormData:
+   - file (uploaded video)
+   - anomaly_types (JSON array of anomaly IDs)
+
+Backend:
+3) process_video() receives the upload and validates anomaly IDs.
+4) Video file is saved to cctv-backend/uploads/.
+5) MongoDB video record is created (if DB is enabled).
+6) For each anomaly ID, a new thread is created.
+7) Each thread runs its detector on the same video file path.
+8) Each detector yields events in timeline order while scanning frames/audio.
+9) Events from all detectors are pushed into a shared SSE queue.
+10) The API streams SSE messages to the frontend as events arrive.
+11) When all detectors finish, a final done message is sent.
+12) MongoDB is updated with total detections and final status.
+
+
+3) PARALLEL DETECTOR EXECUTION (THREAD PER MODEL)
+
++------------------------- process_video() -------------------------+
+|                                                                   |
+|  Selected anomaly IDs: [fight, fire, fall, crowd, scream, gunshot] |
+|                                                                   |
+|  start_thread(fight_detector.detect)  -------------------------+  |
+|  start_thread(fire_detector.detect)   ----------------------+  |  |
+|  start_thread(fall_detector.detect)   -------------------+  |  |  |
+|  start_thread(crowd_detector.detect)  ---------------+    |  |  |  |
+|  start_thread(scream_detector.detect) -----------+   |    |  |  |  |
+|  start_thread(gunshot_detector.detect) -------+  |   |    |  |  |  |
+|                                              v  v   v    v  v  v  |
+|                                         [SSE event queue]         |
+|                                              |                    |
+|                                              v                    |
+|                                        StreamingResponse           |
+|                                                                   |
++-------------------------------------------------------------------+
+
+
+4) WHERE EACH DETECTOR LIVES (MODEL FILES)
+- Fight: cctv-backend/detectors/fight_detector.py -> models/best_fight_model.pth
+- Fire: cctv-backend/detectors/fire_detector.py -> models/fire_model_best.pt
+- Fall: cctv-backend/detectors/fall_detector.py -> models/posture_model_best.pth
+- Crowd: cctv-backend/detectors/crowd_detector.py -> models/yolov8n.pt
+- Scream: cctv-backend/detectors/scream_detector.py -> models/scream_classifier.keras
+- Gunshot: cctv-backend/detectors/gunshot_detector.py -> models/gunshot_trained_model.pth
+
+
+5) FULL WORKFLOW - SSE MESSAGE FLOW
+- video_meta: sent once with videoId + stream URLs
+- event: emitted by each detector as anomalies are found
+- error: emitted if a detector fails
+- detector_done: sent when one detector finishes
+- done: final message after all detectors end
+
+
+6) RUNTIME PARALLELISM NOTES
+- Each detector runs in its own thread (CPU/GPU dependent).
+- All detectors read from the same saved video file on disk.
+- SSE streaming is merged into one timeline for the UI.
+- The system does not require a global fusion step for /process-video;
+  it merges events by streaming them as they arrive.
+
+
+SUMMARY
+Parallel anomaly processing is achieved by thread-per-detector execution in /process-video. All detectors operate on the same uploaded video file, emit events independently, and the backend streams a unified SSE feed to the frontend while persisting results in MongoDB.
