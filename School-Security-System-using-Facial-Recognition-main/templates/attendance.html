@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-900"> Посещаемость</h2>
+    <p class="text-sm text-gray-600 mt-1">Журнал отметок присутствия учеников и сотрудников</p>
+    <div class="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
+</div>
+
+<!-- ВЫБОР ДАТЫ -->
+<div class="bg-white rounded-xl p-4 shadow-sm border border-[#4a5a6b]/30 mb-6">
+    <div class="flex flex-wrap items-center gap-4">
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1"> Выберите дату</label>
+            <input type="date" id="selectedDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+        <div class="flex gap-2 items-end">
+            <button id="showTodayBtn" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg text-sm"> Сегодня</button>
+            <button id="showYesterdayBtn" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm"> Вчера</button>
+        </div>
+    </div>
+</div>
+
+<!-- СТАТИСТИКА ЗА ДЕНЬ -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statsContainer">
+    <div class="rounded-xl bg-white p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-gray-900" id="totalCount">0</p>
+        <p class="text-xs text-gray-500">Всего отметок</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-emerald-600" id="presentCount">0</p>
+        <p class="text-xs text-gray-500">Присутствуют</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-amber-600" id="lateCount">0</p>
+        <p class="text-xs text-gray-500">Опоздали</p>
+    </div>
+    <div class="rounded-xl bg-white p-4 text-center shadow-sm">
+        <p class="text-2xl font-bold text-purple-600" id="uniqueCount">0</p>
+        <p class="text-xs text-gray-500">Уникальных</p>
+    </div>
+</div>
+
+<!-- ТАБЛИЦА ПОСЕЩАЕМОСТИ ЗА ДЕНЬ -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 overflow-x-auto">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4" id="tableTitle"> Журнал посещаемости</h3>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 text-left">
+                    <th class="pb-3 pr-3 font-semibold text-gray-500">Время</th>
+                    <th class="pb-3 pr-3 font-semibold text-gray-500">ФИО</th>
+                    <th class="pb-3 pr-3 font-semibold text-gray-500">Класс/Должность</th>
+                    <th class="pb-3 pr-3 font-semibold text-gray-500">Статус</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+                <tr><td colspan="4" class="text-center py-8 text-gray-400">Выберите дату</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+    // Загрузить посещаемость за выбранную дату
+    function loadAttendance(date) {
+        fetch(`/attendance/filter?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const items = data.attendance || [];
+
+                // Обновляем статистику
+                document.getElementById('totalCount').innerText = items.length;
+                document.getElementById('presentCount').innerText = items.filter(i => i.status === 'Присутствует').length;
+                document.getElementById('lateCount').innerText = items.filter(i => i.status === 'Опоздал').length;
+
+                // Уникальные люди
+                const unique = new Set(items.map(i => i.name));
+                document.getElementById('uniqueCount').innerText = unique.size;
+
+                // Заголовок таблицы
+                const [day, month, year] = date.split('-');
+                document.getElementById('tableTitle').innerHTML = ` Журнал посещаемости за ${day}.${month}.${year}`;
+
+                // Заполняем таблицу
+                if (items.length === 0) {
+                    document.getElementById('attendanceTableBody').innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400">📭 Нет записей за этот день</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                for (const row of items) {
+                    let statusClass = '';
+                    let statusText = '';
+                    if (row.status === 'Присутствует') {
+                        statusClass = 'bg-emerald-100 text-emerald-700';
+                        statusText = ' Присутствует';
+                    } else if (row.status === 'Опоздал') {
+                        statusClass = 'bg-amber-100 text-amber-700';
+                        statusText = ' Опоздал';
+                    } else {
+                        statusClass = 'bg-red-100 text-red-700';
+                        statusText = ' Отсутствует';
+                    }
+
+                    html += `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="py-3 pr-3 font-mono text-xs">${row.time}</td>
+                            <td class="py-3 pr-3 font-medium">${row.name}</td>
+                            <td class="py-3 pr-3 text-gray-600">${row.department}</td>
+                            <td class="py-3 pr-3"><span class="${statusClass} px-2 py-1 rounded-full text-xs font-medium">${statusText}</span></td>
+                        </tr>
+                    `;
+                }
+                document.getElementById('attendanceTableBody').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                document.getElementById('attendanceTableBody').innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-500"> Ошибка загрузки</td></tr>';
+            });
+    }
+
+    // Установить сегодняшнюю дату
+    function setToday() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        document.getElementById('selectedDate').value = dateStr;
+        loadAttendance(dateStr);
+    }
+
+    // Установить вчерашнюю дату
+    function setYesterday() {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const year = yesterday.getFullYear();
+        const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+        const day = String(yesterday.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        document.getElementById('selectedDate').value = dateStr;
+        loadAttendance(dateStr);
+    }
+
+    document.getElementById('selectedDate').addEventListener('change', (e) => {
+        loadAttendance(e.target.value);
+    });
+
+    document.getElementById('showTodayBtn').onclick = setToday;
+    document.getElementById('showYesterdayBtn').onclick = setYesterday;
+
+    // Загружаем сегодняшнюю дату при загрузке страницы
+    setToday();
+</script>
+
+{% endblock %}

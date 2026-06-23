@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ЗАГОЛОВОК СТРАНИЦЫ -->
+<div class="mb-6">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-900" id="pageTitle">Ученики и сотрудники</h2>
+    <p class="text-sm text-gray-600 mt-1" id="pageDesc">Добавление, редактирование и загрузка фотографий</p>
+    <div class="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
+</div>
+
+<!-- ПЕРЕКЛЮЧАТЕЛЬ МЕЖДУ УЧЕНИКАМИ И СОТРУДНИКАМИ -->
+<div class="flex gap-2 mb-6">
+    <button id="studentsTab" class="px-5 py-2 rounded-lg text-sm font-medium transition-all bg-[#4a5a6b] text-white shadow-sm">
+        Ученики
+    </button>
+    <button id="staffTab" class="px-5 py-2 rounded-lg text-sm font-medium transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+        Сотрудники
+    </button>
+</div>
+
+<!-- ФОРМА ДОБАВЛЕНИЯ УЧЕНИКА (была) -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all mb-6" id="studentForm">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Добавить ученика</h3>
+    <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="student_id" placeholder="ID ученика *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="name" placeholder="ФИО ученика *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="dep" placeholder="Класс *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="division" placeholder="Буква класса">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="roll" placeholder="Номер в журнале">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="gender" placeholder="Пол">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="dob" placeholder="Дата рождения">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="email" placeholder="Эл. почта" type="email">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="phone" placeholder="Телефон родителя">
+        <input class="sm:col-span-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="address" placeholder="Адрес">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="teacher" placeholder="Классный руководитель">
+        <input type="hidden" name="person_type" value="ученик">
+        <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
+            <button type="submit" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg hover:bg-[#3d4a59] transition text-sm font-medium inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Сохранить
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- ФОРМА ДОБАВЛЕНИЯ СОТРУДНИКА (упрощённая) -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all mb-6" id="staffForm" style="display:none;">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Добавить сотрудника</h3>
+    <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="student_id" placeholder="ID сотрудника *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="name" placeholder="ФИО сотрудника *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="dep" placeholder="Должность *" required>
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="phone" placeholder="Телефон">
+        <input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4a5a6b]/30 focus:border-[#4a5a6b]/30 text-sm" name="email" placeholder="Эл. почта" type="email">
+        <input type="hidden" name="person_type" value="сотрудник">
+        <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
+            <button type="submit" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg hover:bg-[#3d4a59] transition text-sm font-medium inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Сохранить
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- СПИСОК УЧЕНИКОВ/СОТРУДНИКОВ -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all overflow-x-auto">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4" id="listTitle">Список учеников и сотрудников</h3>
+
+    <!-- ФИЛЬТРЫ -->
+    <div class="flex flex-wrap gap-3 mb-4">
+        <input type="text" id="filterName" placeholder="Фильтр по ФИО" class="w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <input type="text" id="filterClass" placeholder="Фильтр по классу/должности" class="w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <button id="applyFilter" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Применить
+        </button>
+        <button id="resetFilter" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Сбросить
+        </button>
+    </div>
+
+    <div id="studentsTable"></div>
+</section>
+
+<script>
+    let currentType = 'ученик';
+
+    document.getElementById('studentsTab').onclick = () => {
+        currentType = 'ученик';
+        document.getElementById('studentsTab').classList.add('bg-[#4a5a6b]', 'text-white');
+        document.getElementById('studentsTab').classList.remove('bg-gray-100', 'text-gray-700');
+        document.getElementById('staffTab').classList.remove('bg-[#4a5a6b]', 'text-white');
+        document.getElementById('staffTab').classList.add('bg-gray-100', 'text-gray-700');
+
+        document.getElementById('studentForm').style.display = 'block';
+        document.getElementById('staffForm').style.display = 'none';
+        document.getElementById('pageTitle').innerText = 'Ученики';
+        document.getElementById('listTitle').innerText = 'Список учеников';
+        document.getElementById('filterClass').placeholder = 'Фильтр по классу';
+
+        loadStudents();
+    };
+
+    document.getElementById('staffTab').onclick = () => {
+        currentType = 'сотрудник';
+        document.getElementById('staffTab').classList.add('bg-[#4a5a6b]', 'text-white');
+        document.getElementById('staffTab').classList.remove('bg-gray-100', 'text-gray-700');
+        document.getElementById('studentsTab').classList.remove('bg-[#4a5a6b]', 'text-white');
+        document.getElementById('studentsTab').classList.add('bg-gray-100', 'text-gray-700');
+
+        document.getElementById('studentForm').style.display = 'none';
+        document.getElementById('staffForm').style.display = 'block';
+        document.getElementById('pageTitle').innerText = 'Сотрудники';
+        document.getElementById('listTitle').innerText = 'Список сотрудников';
+        document.getElementById('filterClass').placeholder = 'Фильтр по должности';
+
+        loadStaff();
+    };
+
+    function loadStudents(nameFilter = '', classFilter = '') {
+        fetch(`/students/filter?name=${encodeURIComponent(nameFilter)}&class=${encodeURIComponent(classFilter)}&type=ученик`)
+            .then(response => response.json())
+            .then(data => {
+                const students = data.students;
+                if (students.length === 0) {
+                    document.getElementById('studentsTable').innerHTML = '<div class="text-center py-8 text-gray-400">Нет учеников</div>';
+                    return;
+                }
+                let html = `<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 text-left text-gray-500">
+                    <th class="pb-2 pr-2">ID</th><th class="pb-2 pr-2">ФИО</th><th class="pb-2 pr-2">Класс</th>
+                    <th class="pb-2 pr-2">Телефон</th><th class="pb-2 pr-2">Фото</th><th class="pb-2">Действия</th>
+                </tr></thead><tbody>`;
+                for (const s of students) {
+                    html += `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 pr-2 font-mono text-xs">${escapeHtml(s.Student_id)}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Name)}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Dep || '-')}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Phone || '-')}</td>
+                        <td class="py-3 pr-2">${s.PhotoSample === 'Да' ? '<span class="text-green-600"> Есть</span>' : '<span class="text-red-500"> Нет</span>'}</td>
+                        <td class="py-3">${getActionButtons(s)}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table>`;
+                document.getElementById('studentsTable').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('studentsTable').innerHTML = '<div class="text-center py-8 text-red-500">Ошибка загрузки</div>';
+            });
+    }
+
+    function loadStaff(nameFilter = '', positionFilter = '') {
+        fetch(`/students/filter?name=${encodeURIComponent(nameFilter)}&class=${encodeURIComponent(positionFilter)}&type=сотрудник`)
+            .then(response => response.json())
+            .then(data => {
+                const staff = data.students;
+                if (staff.length === 0) {
+                    document.getElementById('studentsTable').innerHTML = '<div class="text-center py-8 text-gray-400">Нет сотрудников</div>';
+                    return;
+                }
+                let html = `<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 text-left text-gray-500">
+                    <th class="pb-2 pr-2">ID</th><th class="pb-2 pr-2">ФИО</th><th class="pb-2 pr-2">Должность</th>
+                    <th class="pb-2 pr-2">Телефон</th><th class="pb-2 pr-2">Фото</th><th class="pb-2">Действия</th>
+                </tr></thead><tbody>`;
+                for (const s of staff) {
+                    html += `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 pr-2 font-mono text-xs">${escapeHtml(s.Student_id)}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Name)}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Dep || '-')}</td>
+                        <td class="py-3 pr-2">${escapeHtml(s.Phone || '-')}</td>
+                        <td class="py-3 pr-2">${s.PhotoSample === 'Да' ? '<span class="text-green-600"> Есть</span>' : '<span class="text-red-500"> Нет</span>'}</td>
+                        <td class="py-3">${getActionButtons(s)}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table>`;
+                document.getElementById('studentsTable').innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('studentsTable').innerHTML = '<div class="text-center py-8 text-red-500"> Ошибка загрузки</div>';
+            });
+    }
+
+    function getActionButtons(s) {
+        return `<div class="flex flex-wrap gap-2">
+            <form method="post" action="/students/${s.Student_id}/photos" enctype="multipart/form-data" class="inline-flex items-center gap-1">
+                <input type="file" name="photos" accept="image/*" multiple class="text-xs file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-gray-100">
+                <button type="submit" class="bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs"> Загрузить</button>
+            </form>
+            <form method="post" action="/students/${s.Student_id}/delete" class="inline" onsubmit="return confirm('Удалить?')">
+                <button type="submit" class="bg-red-100 text-red-700 px-2 py-1 rounded-lg text-xs"> Удалить</button>
+            </form>
+        </div>`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    document.getElementById('applyFilter').onclick = () => {
+        const nameFilter = document.getElementById('filterName').value;
+        const classFilter = document.getElementById('filterClass').value;
+        if (currentType === 'ученик') {
+            loadStudents(nameFilter, classFilter);
+        } else {
+            loadStaff(nameFilter, classFilter);
+        }
+    };
+
+    document.getElementById('resetFilter').onclick = () => {
+        document.getElementById('filterName').value = '';
+        document.getElementById('filterClass').value = '';
+        if (currentType === 'ученик') {
+            loadStudents();
+        } else {
+            loadStaff();
+        }
+    };
+
+    loadStudents();
+</script>
+
+{% endblock %}

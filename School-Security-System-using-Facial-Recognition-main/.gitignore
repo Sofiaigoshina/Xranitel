@@ -1,0 +1,24 @@
+# Создать файл .gitignore
+echo "# Python
+__pycache__/
+venv/
+*.pyc
+*.pyo
+
+# Наши данные (НЕ загружаем на GitHub)
+classifier.xml
+face_recognizer.db
+attendance.csv
+uploads/
+detected_faces/
+static/detected_videos/
+data/
+
+# Файлы IDE
+.vscode/
+.idea/
+
+# Временные файлы
+*.log
+*.tmp
+" > .gitignore

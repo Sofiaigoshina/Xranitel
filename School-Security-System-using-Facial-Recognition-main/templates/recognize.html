@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ЗАГОЛОВОК СТРАНИЦЫ -->
+<div class="mb-6">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Распознавание лиц</h2>
+    <p class="text-sm text-gray-600 mt-1">Загрузите фото или видео для идентификации учеников и сотрудников</p>
+    <div class="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
+</div>
+
+<!-- БЛОК РАСПОЗНАВАНИЯ ПО ФОТО -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all max-w-2xl mb-6">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3"> Распознавание по фото</h3>
+    <p class="text-gray-600 text-sm mb-4">Загрузите фото. Система определит личность по обученной модели распознавания.</p>
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+        <input type="file" name="photo" accept="image/*" required class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200">
+        <button type="submit" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg hover:bg-[#3d4a59] transition text-sm font-medium">Распознать</button>
+    </form>
+
+    {% if result %}
+        <div class="mt-6 rounded-lg p-4 text-sm {% if result.ok %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+            {{ result.message }}
+        </div>
+    {% endif %}
+
+    {% if student %}
+        <div class="mt-6 rounded-lg border border-gray-200 p-4">
+            <h4 class="font-bold text-gray-900 mb-2"> Данные ученика</h4>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li><span class="text-gray-500">ID:</span> {{ student["Student_id"] }}</li>
+                <li><span class="text-gray-500">Имя:</span> {{ student["Name"] }}</li>
+                <li><span class="text-gray-500">Класс:</span> {{ student["Dep"] }}</li>
+                <li><span class="text-gray-500">Телефон:</span> {{ student["Phone"] }}</li>
+            </ul>
+        </div>
+    {% endif %}
+</section>
+
+<!-- БЛОК РАСПОЗНАВАНИЯ ПО ВИДЕО -->
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3"> Распознавание лиц в видео</h3>
+    <p class="text-gray-600 text-sm mb-4">
+        Загрузите видео с камеры наблюдения.
+        Система найдёт и распознает всех зарегистрированных участников.
+    </p>
+
+    <form action="/recognize_video" method="post" enctype="multipart/form-data" class="space-y-4" id="videoForm">
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#4a5a6b]/50 transition">
+            <input type="file" name="video" accept="video/*" required class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" id="videoInput">
+            <p class="text-gray-400 text-xs mt-2">Поддерживаемые форматы: MP4, AVI, MOV</p>
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition text-sm font-medium" id="videoSubmitBtn">
+             Распознать на видео
+        </button>
+    </form>
+
+    <!-- РЕЗУЛЬТАТЫ РАСПОЗНАВАНИЯ ВИДЕО -->
+    {% if video_sessions %}
+    <div class="mt-6 border-t border-gray-200 pt-6">
+        <h4 class="font-bold text-gray-900 mb-3"> Отчёт по видео "{{ video_name }}"</h4>
+
+        <!-- Краткая статистика -->
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-emerald-50 p-3 rounded-lg text-center">
+                <p class="text-2xl font-bold text-emerald-600">{{ video_sessions|selectattr("name", "ne", "Неизвестный")|list|length }}</p>
+                <p class="text-xs text-emerald-700 font-medium">Распознано учеников</p>
+            </div>
+            <div class="bg-amber-50 p-3 rounded-lg text-center">
+                <p class="text-2xl font-bold text-amber-600">{{ video_sessions|selectattr("name", "eq", "Неизвестный")|list|length }}</p>
+                <p class="text-xs text-amber-700 font-medium">Неизвестных лиц</p>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-lg text-center">
+                <p class="text-2xl font-bold text-blue-600">{{ video_sessions|length }}</p>
+                <p class="text-xs text-blue-700 font-medium">Всего появлений</p>
+            </div>
+        </div>
+
+        <!-- ПРОСМОТР ВИДЕО С РАМКАМИ -->
+     <!-- ПРОСМОТР ВИДЕО С РАМКАМИ -->
+{% if video_output %}
+<div class="mt-6 mb-6">
+    <h4 class="font-semibold text-gray-900 mb-3"> Видео с распознанными лицами</h4>
+    <div style="max-width: 500px; margin: 0 auto;">
+        <video controls style="width: 100%; height: auto; max-height: 300px; border-radius: 12px; background: black;">
+            <source src="{{ url_for('static', filename='detected_videos/' + video_output|replace('static\\detected_videos\\', '')|replace('static/detected_videos/', '')) }}" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+    </div>
+</div>
+{% endif %}
+
+        <!-- ТАБЛИЦА ПОЯВЛЕНИЙ -->
+        <h4 class="font-bold text-gray-900 mb-3"> Хронология появлений</h4>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2 text-left font-semibold text-gray-700">Время появления</th>
+                        <th class="p-2 text-left font-semibold text-gray-700">Время ухода</th>
+                        <th class="p-2 text-left font-semibold text-gray-700">Длительность</th>
+                        <th class="p-2 text-left font-semibold text-gray-700">Человек</th>
+                        <th class="p-2 text-left font-semibold text-gray-700">Уверенность</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in video_sessions %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="p-2 font-mono text-xs text-gray-600">{{ session.start_time_str }}</td>
+                        <td class="p-2 font-mono text-xs text-gray-600">{{ session.end_time_str }}</td>
+                        <td class="p-2">
+                            <span class="{% if session.duration > 60 %}text-red-600 font-semibold{% else %}text-gray-600{% endif %}">
+                                {{ session.duration }} сек
+                            </span>
+                        </td>
+                        <td class="p-2">
+                            {% if session.name != 'Неизвестный' %}
+                                <span class="text-emerald-600 font-medium"> {{ session.name }}</span>
+                                {% if session.department %}
+                                <span class="text-xs text-gray-400 ml-1">({{ session.department }})</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-amber-600"> Неизвестный</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-600">{{ session.max_confidence }}%</span>
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full" style="width: {{ session.max_confidence }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Сводка по ученикам -->
+        <h4 class="font-bold text-gray-900 mb-3 mt-6"> Сводка по ученикам</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {% set persons = {} %}
+            {% for session in video_sessions %}
+                {% if session.name != 'Неизвестный' %}
+                    {% set _ = persons.update({session.name: persons.get(session.name, {'count': 0, 'total_duration': 0})}) %}
+                    {% set _ = persons[session.name].update({'count': persons[session.name].count + 1, 'total_duration': persons[session.name].total_duration + session.duration}) %}
+                {% endif %}
+            {% endfor %}
+            {% for name, data in persons.items() %}
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="font-medium text-gray-800"> {{ name }}</p>
+                <p class="text-xs text-gray-500">Появился: {{ data.count }} раз</p>
+                <p class="text-xs text-gray-500">Всего: {{ (data.total_duration / 60)|round(1) }} мин</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+{% endblock %}

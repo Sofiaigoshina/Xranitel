@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ЗАГОЛОВОК СТРАНИЦЫ -->
+<div class="mb-6">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Обучение модели</h2>
+    <p class="text-sm text-gray-600 mt-1">Обучение нейросети распознавания лиц на загруженных фото</p>
+    <div class="mt-3 h-1 w-16 bg-[#4a5a6b] rounded-full"></div>
+</div>
+
+<section class="rounded-xl bg-white p-4 sm:p-6 shadow-sm border border-[#4a5a6b]/30 hover:shadow-md transition-all max-w-2xl">
+    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Обучение модели LBPH</h3>
+    <p class="text-gray-600 text-sm mb-6">
+        Запустите процесс обучения модели на собранных фото. Результат сохраняется в файл
+        <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs text-gray-700 font-mono">classifier.xml</code>.
+    </p>
+    <form method="post">
+        <button type="submit" class="bg-[#4a5a6b] text-white px-4 py-2 rounded-lg hover:bg-[#3d4a59] transition text-sm font-medium">Запустить обучение</button>
+    </form>
+</section>
+
+{% endblock %}

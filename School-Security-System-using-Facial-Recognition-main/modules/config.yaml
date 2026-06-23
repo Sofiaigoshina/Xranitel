@@ -1,0 +1,13 @@
+# modules/config.yaml
+
+video:
+  camera_source: 0
+  frame_width: 640
+  frame_height: 480
+  fps: 20
+
+speed_tracking:
+  enabled: true
+  person_height_m: 1.70
+  running_threshold_kmh: 10.0
+  history_length: 8

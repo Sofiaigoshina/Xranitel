@@ -1,0 +1,12 @@
+
+Как открыть программу:
+
+cd C:\Diplom\School-Security-System-using-Facial-Recognition-main
+venv\Scripts\activate
+python web_app.py
+
+
+
+
+python fill_attendance.py
+python web_app.py
