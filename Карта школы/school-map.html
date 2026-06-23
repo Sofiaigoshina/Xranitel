@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивная карта школы - Система видеонаблюдения</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .floor-selector {
+            display: flex;
+            gap: 15px;
+        }
+
+        .floor-btn {
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #334155;
+            color: white;
+        }
+
+        .floor-btn.active {
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        .floor-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .main-container {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .map-container {
+            flex: 3;
+            min-width: 500px;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .map-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        #map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 12px;
+        }
+
+        #zones-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .zone {
+            position: absolute;
+            border: 3px solid;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+            background-color: rgba(0,0,0,0.15);
+        }
+
+        .zone:hover {
+            transform: scale(1.02);
+            border-width: 4px;
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .zone-clicked {
+            animation: zonePulse 0.4s ease-out;
+        }
+
+        @keyframes zonePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255,255,255,0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(255,255,255,0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255,255,255,0);
+            }
+        }
+
+        .zone-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000cc;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            text-shadow: 1px 1px 0px black;
+        }
+
+        .zone:hover .zone-label {
+            background: #000000;
+            font-size: 14px;
+            bottom: -34px;
+        }
+
+        .camera-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .camera-panel h3 {
+            font-size: 1.3rem;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+
+        #selected-camera {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        #camera-name-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        #camera-status {
+            font-size: 0.9rem;
+            color: #10b981;
+        }
+
+        .video-placeholder {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .video-placeholder video {
+            width: 100%;
+            border-radius: 12px;
+            background: #000;
+        }
+
+        .no-video {
+            color: #94a3b8;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .zone-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .zone-list-item {
+            background: #0f172a;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 4px solid;
+        }
+
+        .zone-list-item:hover {
+            background: #334155;
+            transform: translateX(5px);
+        }
+
+        .zone-list-item.active {
+            background: #3b82f6;
+            animation: listPulse 0.3s ease;
+        }
+
+        @keyframes listPulse {
+            0% { background: #3b82f6; transform: scale(1); }
+            50% { background: #60a5fa; transform: scale(1.02); }
+            100% { background: #3b82f6; transform: scale(1); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 800px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .map-container {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎥 Школьная система видеонаблюдения</h1>
+        <div class="floor-selector">
+            <button class="floor-btn active" data-floor="1">🏫 1 ЭТАЖ</button>
+            <button class="floor-btn" data-floor="2">🏫 2 ЭТАЖ</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="map-container">
+            <div class="map-wrapper">
+                <img id="map-image" src="схема/1.png" alt="План школы">
+                <div id="zones-layer"></div>
+            </div>
+        </div>
+
+        <div class="camera-panel">
+            <h3>📹 Информация о камере</h3>
+            <div id="selected-camera">
+                <div id="camera-name-display">❌ Не выбрана</div>
+                <div id="camera-status">👉 Нажмите на любую зону на карте</div>
+            </div>
+            <div class="video-placeholder" id="video-container">
+                <div class="no-video">🎥 Здесь будет видео с камеры</div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <h4>📍 Список камер (18):</h4>
+                <div class="zone-list" id="zone-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const camerasData = [
+            {"id":100,"name":"Столовая","floor":1,"coord_x":4.4,"coord_y":55.9,"coverage_width":38.1,"coverage_height":27.6,"video_url":"videos/stolovaya.mp4","color":"green","colorHex":"#10b981"},
+            {"id":102,"name":"Коридор - 1 этаж","floor":1,"coord_x":18.6,"coord_y":36.3,"coverage_width":58.6,"coverage_height":20.1,"video_url":"videos/koridor_1.mp4","color":"red","colorHex":"#ef4444"},
+            {"id":103,"name":"Лестница","floor":1,"coord_x":42.5,"coord_y":16.3,"coverage_width":17.4,"coverage_height":19.6,"video_url":"videos/lestnitsa.mp4","color":"purple","colorHex":"#8b5cf6"},
+            {"id":104,"name":"Вход","floor":1,"coord_x":42.8,"coord_y":56.6,"coverage_width":17.2,"coverage_height":27.3,"video_url":"videos/vhod.mp4","color":"orange","colorHex":"#f59e0b"},
+            {"id":105,"name":"Спортзал","floor":1,"coord_x":76.6,"coord_y":16.5,"coverage_width":17.7,"coverage_height":67.7,"video_url":"videos/sportzal.mp4","color":"green","colorHex":"#10b981"},
+            {"id":106,"name":"Библиотека","floor":1,"coord_x":30.1,"coord_y":16.1,"coverage_width":12.4,"coverage_height":19.8,"video_url":"videos/biblioteka.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":107,"name":"Медик","floor":1,"coord_x":18.2,"coord_y":16.3,"coverage_width":11.7,"coverage_height":19.8,"video_url":"videos/medik.mp4","color":"pink","colorHex":"#ec489a"},
+            {"id":108,"name":"Гардероб","floor":1,"coord_x":60.1,"coord_y":56.4,"coverage_width":16.2,"coverage_height":27.3,"video_url":"videos/garderob.mp4","color":"purple","colorHex":"#8b5cf6"},
+            {"id":109,"name":"Коридор - 2 этаж","floor":2,"coord_x":18.6,"coord_y":39.7,"coverage_width":58.3,"coverage_height":20.5,"video_url":"videos/koridor_2.mp4","color":"red","colorHex":"#ef4444"},
+            {"id":110,"name":"Лестница - 2 этаж","floor":2,"coord_x":42.5,"coord_y":18.7,"coverage_width":17.8,"coverage_height":20.7,"video_url":"videos/lestnitsa_2.mp4","color":"purple","colorHex":"#8b5cf6"},
+            {"id":111,"name":"Актовый зал","floor":2,"coord_x":76.7,"coord_y":18.8,"coverage_width":17.3,"coverage_height":70.6,"video_url":"videos/aktoviy_zal.mp4","color":"green","colorHex":"#10b981"},
+            {"id":112,"name":"Кабинет 1","floor":2,"coord_x":60.3,"coord_y":18.5,"coverage_width":16,"coverage_height":21,"video_url":"videos/kabinet_1.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":113,"name":"Кабинет 2","floor":2,"coord_x":18.7,"coord_y":18.7,"coverage_width":15,"coverage_height":20.7,"video_url":"videos/kabinet_2.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":114,"name":"Кабинет 3","floor":2,"coord_x":4.4,"coord_y":18.8,"coverage_width":14,"coverage_height":34,"video_url":"videos/kabinet_3.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":115,"name":"Кабинет 4","floor":2,"coord_x":4.4,"coord_y":52.7,"coverage_width":14.4,"coverage_height":36.4,"video_url":"videos/kabinet_4.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":116,"name":"Кабинет 5","floor":2,"coord_x":25.6,"coord_y":60.3,"coverage_width":17.2,"coverage_height":28.7,"video_url":"videos/kabinet_5.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":117,"name":"Кабинет 6","floor":2,"coord_x":42.7,"coord_y":60.5,"coverage_width":17,"coverage_height":28.7,"video_url":"videos/kabinet_6.mp4","color":"blue","colorHex":"#3b82f6"},
+            {"id":118,"name":"Кабинет 7","floor":2,"coord_x":59.8,"coord_y":60.3,"coverage_width":16.8,"coverage_height":28.7,"video_url":"videos/kabinet_7.mp4","color":"blue","colorHex":"#3b82f6"}
+        ];
+
+        let currentFloor = 1;
+        let currentCamera = null;
+
+        function hexToRgb(hex) {
+            let r = 0, g = 0, b = 0;
+            if (hex && hex.startsWith('#')) {
+                r = parseInt(hex.slice(1, 3), 16);
+                g = parseInt(hex.slice(3, 5), 16);
+                b = parseInt(hex.slice(5, 7), 16);
+            }
+            return `${r},${g},${b}`;
+        }
+
+        function animateZone(element) {
+            if (!element) return;
+            element.classList.add('zone-clicked');
+            setTimeout(() => {
+                element.classList.remove('zone-clicked');
+            }, 400);
+        }
+
+        function renderZones() {
+            const container = document.getElementById('zones-layer');
+            container.innerHTML = '';
+            const floorZones = camerasData.filter(z => z.floor === currentFloor);
+
+            floorZones.forEach(zone => {
+                const div = document.createElement('div');
+                div.className = 'zone';
+                div.style.left = `${zone.coord_x}%`;
+                div.style.top = `${zone.coord_y}%`;
+                div.style.width = `${zone.coverage_width}%`;
+                div.style.height = `${zone.coverage_height}%`;
+                div.style.borderColor = zone.colorHex;
+                div.style.backgroundColor = `rgba(${hexToRgb(zone.colorHex)}, 0.2)`;
+                div.setAttribute('data-id', zone.id);
+
+                const label = document.createElement('div');
+                label.className = 'zone-label';
+                label.textContent = `🎥 ${zone.name}`;
+                label.style.backgroundColor = `${zone.colorHex}cc`;
+                label.style.color = 'white';
+                label.style.fontWeight = 'bold';
+                div.appendChild(label);
+
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    animateZone(div);
+                    selectCamera(zone);
+                });
+
+                container.appendChild(div);
+            });
+        }
+
+        function selectCamera(camera) {
+            currentCamera = camera;
+
+            document.getElementById('camera-name-display').innerHTML = `📹 ${camera.name}`;
+            document.getElementById('camera-status').innerHTML = `📍 ${camera.floor} этаж`;
+
+            const videoContainer = document.getElementById('video-container');
+
+            videoContainer.innerHTML = `
+                <video id="camera-video" controls autoplay muted style="width:100%; border-radius:12px;">
+                    <source src="${camera.video_url}" type="video/mp4">
+                    Ваш браузер не поддерживает видео
+                </video>
+                <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
+                    🎬 ${camera.name} - прямая трансляция
+                </div>
+            `;
+
+            document.querySelectorAll('.zone-list-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.id) === camera.id) {
+                    item.classList.add('active');
+                }
+            });
+
+            const video = document.getElementById('camera-video');
+            if (video) {
+                video.onerror = () => {
+                    videoContainer.innerHTML = `
+                        <div class="no-video">
+                            🎥 Видео временно недоступно<br>
+                            <small style="font-size:11px;">Файл: ${camera.video_url}</small>
+                        </div>
+                    `;
+                };
+            }
+        }
+
+        function renderZoneList() {
+            const container = document.getElementById('zone-list');
+            const floorZones = camerasData.filter(z => z.floor === currentFloor);
+
+            if (floorZones.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:20px;">Нет камер на этом этаже</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            floorZones.forEach(zone => {
+                const item = document.createElement('div');
+                item.className = 'zone-list-item';
+                item.style.borderLeftColor = zone.colorHex;
+                item.setAttribute('data-id', zone.id);
+                item.innerHTML = `
+                    <strong>🎥 ${zone.name}</strong>
+                `;
+                item.addEventListener('click', () => {
+                    const zones = document.querySelectorAll('.zone');
+                    zones.forEach(z => {
+                        if (z.getAttribute('data-id') == zone.id) {
+                            animateZone(z);
+                        }
+                    });
+                    selectCamera(zone);
+                });
+                container.appendChild(item);
+            });
+
+            if (currentCamera) {
+                document.querySelectorAll('.zone-list-item').forEach(item => {
+                    if (parseInt(item.dataset.id) === currentCamera.id) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+        }
+
+        function changeFloor(floor) {
+            currentFloor = floor;
+            const mapImage = document.getElementById('map-image');
+            mapImage.src = `схема/${floor}.png`;
+
+            document.querySelectorAll('.floor-btn').forEach(btn => {
+                if (parseInt(btn.dataset.floor) === floor) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            renderZones();
+            renderZoneList();
+
+            currentCamera = null;
+            document.getElementById('camera-name-display').innerHTML = '❌ Не выбрана';
+            document.getElementById('camera-status').innerHTML = '👉 Нажмите на любую зону на карте';
+            document.getElementById('video-container').innerHTML = '<div class="no-video">🎥 Здесь будет видео с камеры</div>';
+        }
+
+        document.querySelectorAll('.floor-btn').forEach(btn => {
+            btn.addEventListener('click', () => changeFloor(parseInt(btn.dataset.floor)));
+        });
+
+        changeFloor(1);
+    </script>
+</body>
+</html>
