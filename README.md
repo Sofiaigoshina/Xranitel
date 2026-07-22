@@ -217,14 +217,14 @@ YOLOv8 дообучена на **800 изображениях** огня и ды
 ### Архитектура системы
 ![Детекция оружия](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Рисунок1.png)
 
+### Система умеет
+![Оповещения](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Снимок%20экрана%202026-07-22%20235051.png)
+
 ### Обнаружение угроз
 ![Детекция пожара](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Рисунок2.png)
 
 ### Распознавание лиц
 ![Результаты](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Рисунок3.png)
-
-### Система умеет
-![Оповещения](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Снимок%20экрана%202026-07-22%20235051.png)
 
 ### Как работает распознавание лиц
 ![Аналитика](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/Снимок%20экрана%202026-07-22%20235117.png)
