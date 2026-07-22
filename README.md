@@ -261,9 +261,10 @@ YOLOv8 дообучена на **800 изображениях** огня и ды
 
 ---
 
+
 ## 🎥 Видео-демонстрация
 
-<video src="https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/video.mp4" controls width="100%"></video>
+▶️ [Смотреть видео-демонстрацию](https://github.com/Sofiaigoshina/Xranitel/raw/main/readmevv/video.mp4)
 
 **На видео показаны:**
 1. Вход в систему под администратором
